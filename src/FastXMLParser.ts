@@ -1,6 +1,6 @@
 import {XMLParser} from "fast-xml-parser";
 
-export default class HoapParser {
+export default class FastXMLParser {
     public async parse(rawXML: string): Promise<void> {
         const parser: XMLParser = new XMLParser();
 

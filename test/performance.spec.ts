@@ -1,18 +1,26 @@
 import HoapParser from "../src/HoapParser";
+import fs from "fs";
+import FastXMLParser from "../src/FastXMLParser";
 
 
 describe('Performance comparison',  ():void => {
-    test('Should transform base case XML into POJO in under 500ms', async (): Promise<void> => {
+    test('Should transform base case XML into POJO in under 1000ms', async (): Promise<void> => {
+        const fastXML: FastXMLParser = new FastXMLParser();
         const hoap: HoapParser = new HoapParser();
 
-        const startTime = performance.now();
+        const rawData: string = fs.readFileSync(
+            `${process.cwd()}/test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`,
+            'utf8'
+        );
 
-        await hoap.parse()
+        const startTime: number = performance.now();
 
-        const endTime = performance.now();
+        await hoap.parse(rawData)
 
-        const executionTime = endTime - startTime;
+        const endTime: number = performance.now();
 
-        expect(executionTime).toBeLessThan(500);
+        const hoapExecutionTime: number = endTime - startTime;
+
+        expect(hoapExecutionTime).toBeLessThan(1000);
     });
 });
