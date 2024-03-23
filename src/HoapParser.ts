@@ -1,5 +1,3 @@
-import {XMLParser} from "fast-xml-parser";
-
 export default class HoapParser {
 
     private readonly INIT_NEEDLE: string = '<?xml version="1.0" encoding="UTF-8"?>'
