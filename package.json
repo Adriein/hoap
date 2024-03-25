@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "jest",
-    "build:dev": "tsc --watch --preserveWatchOutput"
+    "build:dev": "tsc --watch --preserveWatchOutput",
+    "start": "node ./dist/src/index.js"
   },
   "keywords": [],
   "author": "",
