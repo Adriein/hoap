@@ -16,12 +16,12 @@ export class Parser {
             throw new Error('No path provided');
         }
 
-        const stream: ReadStream = fs.createReadStream(this.config.path, {encoding: this.config.encoding});
+        const stream: ReadStream = fs.createReadStream(this.config.path);
 
         const bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
         stream.on("data", (chunk: Buffer): void => {
-
+            console.log(chunk.byteLength)
         })
     }
 }
