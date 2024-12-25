@@ -19,7 +19,7 @@ hoap.parse(rawData)
     .catch(error => console.log(error));
 */
 
-const AMADEUS_TEST_XML = `${process.cwd()}/../test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`;
+const AMADEUS_TEST_XML = `${process.cwd()}/test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`;
 
 const config: ParserConfig = ParserConfig
     .instance()
