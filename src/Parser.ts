@@ -44,7 +44,7 @@ export class Parser {
         
         const binaryXmlTags: MapIterator<Buffer<ArrayBuffer>> = this.WATCHED_TAGS.keys();
 
-        let binaryXmlTag: IteratorResult<Buffer<ArrayBuffer> | undefined> = binaryXmlTags.next();
+        let binaryXmlTag: IteratorResult<Buffer<ArrayBuffer>, undefined> = this.restartMapIterator();
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
@@ -69,8 +69,11 @@ export class Parser {
             const start: number = chunkCombinedWithLeftover.length - this.LARGEST_XML_TAG_BYTES;
             bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
 
-            const newIterator: MapIterator<Buffer<ArrayBuffer>> = this.WATCHED_TAGS.keys();
-            binaryXmlTag = newIterator.next();
+            binaryXmlTag = this.restartMapIterator();
         })
+    }
+
+    private restartMapIterator(): IteratorResult<Buffer<ArrayBuffer>> {
+       return this.WATCHED_TAGS.keys().next();
     }
 }
