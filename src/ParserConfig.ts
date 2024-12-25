@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2024 Adria Claret <adria.claret@gmail.com>
+ * MIT Licensed
+ */
+
 export class ParserConfig {
     private constructor(
         private _encoding: BufferEncoding = "binary",

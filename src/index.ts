@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2024 Adria Claret <adria.claret@gmail.com>
+ * MIT Licensed
+ */
+
 import HoapParser from "./HoapParser";
 import fs from "fs";
 import {Parser} from "./Parser";
