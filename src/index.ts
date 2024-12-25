@@ -24,6 +24,7 @@ const AMADEUS_TEST_XML = `${process.cwd()}/../test/xml/Fare_MasterPricerTravelBo
 const config: ParserConfig = ParserConfig
     .instance()
     .withFilePath(AMADEUS_TEST_XML)
+    .withTags(["paxFareDetail"])
 
 const hoap: Parser = new Parser(config);
 

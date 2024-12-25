@@ -21,11 +21,14 @@ export class Parser {
             let xmlTag: string = config.tags[i]!;
             let buffer: Buffer<ArrayBuffer> = Buffer.from(xmlTag, UTF_8_ENCODING);
 
-            //
+            //We store the largest xml tag length to avoid missing info later on chunks
             if (buffer.byteLength > this.LARGEST_XML_TAG_BYTES) {
                 this.LARGEST_XML_TAG_BYTES = buffer.byteLength;
             }
 
+            /* We create a Map<Buffer,string> where we set as a key the binary form of xml tag
+             * for quick search on parsing
+             */
             this.WATCHED_TAGS.set(buffer, xmlTag);
         }
     }
@@ -37,10 +40,29 @@ export class Parser {
 
         const stream: ReadStream = fs.createReadStream(this.config.path);
 
-        const bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(this.LARGEST_XML_TAG_BYTES);
+        let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(this.LARGEST_XML_TAG_BYTES);
+        
+        const binaryXmlTags: MapIterator<Buffer<ArrayBuffer>> = this.WATCHED_TAGS.keys();
 
-        stream.on("data", (chunk: Buffer): void => {
+        stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
+
+            let binaryXmlTag: IteratorResult<Buffer<ArrayBuffer> | undefined> = binaryXmlTags.next();
+
+            while (!binaryXmlTag.done) {
+                const index: number = chunkCombinedWithLeftover.indexOf(binaryXmlTag.value!);
+
+                if (index !== -1) {
+                    console.log()
+
+                    break;
+                }
+
+                binaryXmlTag = binaryXmlTags.next();
+            }
+
+            const start: number = chunkCombinedWithLeftover.length - this.LARGEST_XML_TAG_BYTES;
+            bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
         })
     }
 }
