@@ -9,27 +9,41 @@ import {ParserConfig} from "./ParserConfig";
 import {UTF_8_ENCODING} from "./constants";
 
 export class Parser {
-    private readonly WATCHED_TAGS: Map<Buffer<ArrayBuffer>, string>;
+    private readonly WATCHED_TAGS: Map<string, Buffer<ArrayBuffer>[]>;
     private readonly LARGEST_XML_TAG_BYTES: number = 0;
 
     public constructor(
         private config: ParserConfig
     ) {
-        this.WATCHED_TAGS = new Map<Buffer<ArrayBuffer>, string>();
+        this.WATCHED_TAGS = new Map<string, Buffer<ArrayBuffer>[]>();
 
         for (let i: number = 0; i < config.tags.length; i++) {
             let xmlTag: string = config.tags[i]!;
-            let buffer: Buffer<ArrayBuffer> = Buffer.from(xmlTag, UTF_8_ENCODING);
 
-            //We store the largest xml tag length to avoid missing info later on chunks
-            if (buffer.byteLength > this.LARGEST_XML_TAG_BYTES) {
-                this.LARGEST_XML_TAG_BYTES = buffer.byteLength;
+            /*
+             * Create open and close versions of the watched XML tag
+             */
+            let xmlOpenTag: string = `<${xmlTag}>`;
+            let xmlClosingTag: string = `</${xmlTag}>`;
+
+            let rawBinaryXmlOpenTag: Buffer<ArrayBuffer> = Buffer.from(xmlOpenTag, UTF_8_ENCODING);
+            let rawBinaryXmlClosingTag: Buffer<ArrayBuffer> = Buffer.from(xmlClosingTag, UTF_8_ENCODING);
+
+            /*
+             * Store the largest xml tag length to avoid missing info later on chunks
+             */
+            if (rawBinaryXmlClosingTag.byteLength > this.LARGEST_XML_TAG_BYTES) {
+                this.LARGEST_XML_TAG_BYTES = rawBinaryXmlClosingTag.byteLength;
             }
 
-            /* We create a Map<Buffer,string> where we set as a key the binary form of xml tag
-             * for quick search on parsing
+            /*
+             * Create a Map<Buffer,string> where we set as a key the binary form of xml tag
+             * for quick search on parsing.
+             *
+             * Example:
+             * Map<'recommendations', ['<recommendations>', '</recommendations>']>
              */
-            this.WATCHED_TAGS.set(buffer, xmlTag);
+            this.WATCHED_TAGS.set(xmlTag, [rawBinaryXmlOpenTag, rawBinaryXmlClosingTag]);
         }
     }
 
@@ -42,26 +56,31 @@ export class Parser {
 
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
         
-        const binaryXmlTags: MapIterator<Buffer<ArrayBuffer>> = this.WATCHED_TAGS.keys();
+        const binaryXmlTags: MapIterator<[string, Buffer<ArrayBuffer>[]]> = this.WATCHED_TAGS.entries();
 
-        let binaryXmlTag: IteratorResult<Buffer<ArrayBuffer>, undefined> = this.restartMapIterator();
+        let iteratorResult: IteratorResult<[string, Buffer<ArrayBuffer>[]]> = this.restartMapIterator();
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
-            while (!binaryXmlTag.done) {
-                const index: number = chunkCombinedWithLeftover.indexOf(binaryXmlTag.value!);
+            while (!iteratorResult.done) {
+                const binaryXmlTags: Buffer<ArrayBuffer>[] = iteratorResult.value[1]
 
-                if (index !== -1) {
-                    const tag: Buffer<ArrayBuffer> = chunkCombinedWithLeftover.subarray(
-                        index,
-                        index + binaryXmlTag.value!.byteLength
-                    );
+                for (let i: number = 0; i < binaryXmlTags.length; i++) {
+                    const index: number = chunkCombinedWithLeftover.indexOf(binaryXmlTag);
 
-                    console.log(tag.toString());
+                    if (index !== -1) {
+                        const tag: Buffer<ArrayBuffer> = chunkCombinedWithLeftover.subarray(
+                            index,
+                            index + binaryXmlTag.value!.byteLength
+                        );
 
-                    break;
+                        console.log(tag.toString());
+
+                        break;
+                    }
                 }
+
 
                 binaryXmlTag = binaryXmlTags.next();
             }
@@ -73,7 +92,7 @@ export class Parser {
         })
     }
 
-    private restartMapIterator(): IteratorResult<Buffer<ArrayBuffer>> {
-       return this.WATCHED_TAGS.keys().next();
+    private restartMapIterator(): IteratorResult<[string, Buffer<ArrayBuffer>[]]> {
+       return this.WATCHED_TAGS.entries().next();
     }
 }
