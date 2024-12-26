@@ -7,7 +7,7 @@ import fs from "node:fs";
 import {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
 import {UTF_8_ENCODING} from "./constants";
-import {RawBinaryXmlTagPair} from "./types";
+import {RawBinaryXmlTagPair, WatchedXmlTagsJson} from "./types";
 
 export class Parser {
     private readonly WATCHED_TAGS: Map<string, RawBinaryXmlTagPair>;
@@ -16,6 +16,10 @@ export class Parser {
     public constructor(
         private config: ParserConfig
     ) {
+        const watchedXmlTagsJson: WatchedXmlTagsJson = JSON.parse(
+            fs.readFileSync(config.configFilePath, { encoding: UTF_8_ENCODING})
+        );
+
         this.WATCHED_TAGS = new Map<string, RawBinaryXmlTagPair>();
 
         for (let i: number = 0; i < config.tags.length; i++) {

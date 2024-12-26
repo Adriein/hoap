@@ -7,6 +7,7 @@ export class ParserConfig {
     private constructor(
         private _encoding: BufferEncoding = "binary",
         private _tags: string[] = [],
+        private _configFilePath: string = "hoap.config.json",
         private _path?: string | undefined,
     ) {}
 
@@ -32,6 +33,12 @@ export class ParserConfig {
         return this;
     }
 
+    public withConfigFile(filename: string): ParserConfig {
+        this._configFilePath = filename;
+
+        return this;
+    }
+
 
     public get encoding(): BufferEncoding {
         return this._encoding;
@@ -43,5 +50,9 @@ export class ParserConfig {
 
     public get tags(): string[] {
         return this._tags;
+    }
+
+    public get configFilePath(): string {
+        return this._configFilePath;
     }
 }

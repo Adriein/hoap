@@ -1,0 +1,11 @@
+{
+  "version": "v1",
+  "nodes": [
+    {
+      "name": "paxFareDetail",
+      "leafs": [
+        "totalFareAmount"
+      ]
+    }
+  ]
+}
