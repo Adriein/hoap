@@ -7,15 +7,16 @@ import fs from "node:fs";
 import {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
 import {UTF_8_ENCODING} from "./constants";
+import {RawBinaryXmlTagPair} from "./types";
 
 export class Parser {
-    private readonly WATCHED_TAGS: Map<string, Buffer<ArrayBuffer>[]>;
+    private readonly WATCHED_TAGS: Map<string, RawBinaryXmlTagPair>;
     private readonly LARGEST_XML_TAG_BYTES: number = 0;
 
     public constructor(
         private config: ParserConfig
     ) {
-        this.WATCHED_TAGS = new Map<string, Buffer<ArrayBuffer>[]>();
+        this.WATCHED_TAGS = new Map<string, RawBinaryXmlTagPair>();
 
         for (let i: number = 0; i < config.tags.length; i++) {
             let xmlTag: string = config.tags[i]!;
@@ -29,6 +30,11 @@ export class Parser {
             let rawBinaryXmlOpenTag: Buffer<ArrayBuffer> = Buffer.from(xmlOpenTag, UTF_8_ENCODING);
             let rawBinaryXmlClosingTag: Buffer<ArrayBuffer> = Buffer.from(xmlClosingTag, UTF_8_ENCODING);
 
+            const xmlTagPair: RawBinaryXmlTagPair = {
+                open: rawBinaryXmlOpenTag,
+                close: rawBinaryXmlClosingTag
+            }
+
             /*
              * Store the largest xml tag length to avoid missing info later on chunks
              */
@@ -41,9 +47,9 @@ export class Parser {
              * for quick search on parsing.
              *
              * Example:
-             * Map<'recommendations', ['<recommendations>', '</recommendations>']>
+             * Map<'recommendations', {open: (binary)'<recommendations>', close: (binary)'</recommendations>'}>
              */
-            this.WATCHED_TAGS.set(xmlTag, [rawBinaryXmlOpenTag, rawBinaryXmlClosingTag]);
+            this.WATCHED_TAGS.set(xmlTag, xmlTagPair);
         }
     }
 
@@ -56,15 +62,18 @@ export class Parser {
 
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
         
-        const binaryXmlTags: MapIterator<[string, Buffer<ArrayBuffer>[]]> = this.WATCHED_TAGS.entries();
+        const binaryXmlTags: MapIterator<[string, RawBinaryXmlTagPair]> = this.WATCHED_TAGS.entries();
 
-        let iteratorResult: IteratorResult<[string, Buffer<ArrayBuffer>[]]> = this.restartMapIterator();
+        let iteratorResult: IteratorResult<[string, RawBinaryXmlTagPair]> = this.restartMapIterator();
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
             while (!iteratorResult.done) {
-                const binaryXmlTags: Buffer<ArrayBuffer>[] = iteratorResult.value[1]
+                const {open, close}: RawBinaryXmlTagPair = iteratorResult.value[1];
+
+                const openTagIndex: number = chunkCombinedWithLeftover.indexOf(open);
+                const closeTagIndex: number = chunkCombinedWithLeftover.indexOf(close);
 
                 for (let i: number = 0; i < binaryXmlTags.length; i++) {
                     const index: number = chunkCombinedWithLeftover.indexOf(binaryXmlTag);
@@ -92,7 +101,7 @@ export class Parser {
         })
     }
 
-    private restartMapIterator(): IteratorResult<[string, Buffer<ArrayBuffer>[]]> {
+    private restartMapIterator(): IteratorResult<[string, RawBinaryXmlTagPair]> {
        return this.WATCHED_TAGS.entries().next();
     }
 }

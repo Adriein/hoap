@@ -1,0 +1,1 @@
+export type RawBinaryXmlTagPair = { open: Buffer<ArrayBuffer>, close: Buffer<ArrayBuffer>}
