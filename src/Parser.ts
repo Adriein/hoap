@@ -75,29 +75,26 @@ export class Parser {
                 const openTagIndex: number = chunkCombinedWithLeftover.indexOf(open);
                 const closeTagIndex: number = chunkCombinedWithLeftover.indexOf(close);
 
-                for (let i: number = 0; i < binaryXmlTags.length; i++) {
-                    const index: number = chunkCombinedWithLeftover.indexOf(binaryXmlTag);
+                if (openTagIndex !== -1) {
+                    let relevantChunkPart: Buffer<ArrayBuffer> = chunkCombinedWithLeftover.subarray(
+                        openTagIndex - open.byteLength,
+                        closeTagIndex + close.byteLength
+                    );
 
-                    if (index !== -1) {
-                        const tag: Buffer<ArrayBuffer> = chunkCombinedWithLeftover.subarray(
-                            index,
-                            index + binaryXmlTag.value!.byteLength
-                        );
+                    console.log(relevantChunkPart.toString());
 
-                        console.log(tag.toString());
-
-                        break;
-                    }
+                    break;
                 }
 
 
-                binaryXmlTag = binaryXmlTags.next();
+
+                iteratorResult = binaryXmlTags.next();
             }
 
             const start: number = chunkCombinedWithLeftover.length - this.LARGEST_XML_TAG_BYTES;
             bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
 
-            binaryXmlTag = this.restartMapIterator();
+            iteratorResult = this.restartMapIterator();
         })
     }
 
