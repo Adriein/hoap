@@ -3,7 +3,12 @@
  * MIT Licensed
  */
 
-export type RawBinaryXmlTagPair = { original: string, open: Buffer<ArrayBuffer>, close: Buffer<ArrayBuffer>}
+export type RawBinaryXmlTagPair = {
+    original: string,
+    open: Buffer<ArrayBuffer>,
+    close: Buffer<ArrayBuffer>,
+    type: string
+};
 
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }
 
