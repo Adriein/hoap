@@ -3,11 +3,12 @@
  * MIT Licensed
  */
 
+import {WatchedXmlTagsJson} from "./Shared/types";
+
 export class ParserConfig {
     private constructor(
         private _encoding: BufferEncoding = "binary",
-        private _tags: string[] = [],
-        private _configFilePath: string = "hoap.config.json",
+        private _configFile?: WatchedXmlTagsJson,
         private _path?: string | undefined,
     ) {}
 
@@ -27,14 +28,8 @@ export class ParserConfig {
         return this;
     }
 
-    public withTags(tags: string[]): ParserConfig {
-        this._tags = tags;
-
-        return this;
-    }
-
-    public withConfigFile(filename: string): ParserConfig {
-        this._configFilePath = filename;
+    public withConfigFile(json: WatchedXmlTagsJson): ParserConfig {
+        this._configFile = json;
 
         return this;
     }
@@ -48,11 +43,7 @@ export class ParserConfig {
         return this._path;
     }
 
-    public get tags(): string[] {
-        return this._tags;
-    }
-
-    public get configFilePath(): string {
-        return this._configFilePath;
+    public get configFile(): WatchedXmlTagsJson | undefined {
+        return this._configFile;
     }
 }

@@ -6,8 +6,9 @@
 import fs from "node:fs";
 import {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
-import {UTF_8_ENCODING} from "./constants";
-import {RawBinaryXmlTagPair, WatchedXmlTagsJson} from "./types";
+import {UTF_8_ENCODING} from "./Shared/constants";
+import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "./Shared/types";
+import {XmlTreeNode} from "./Shared/XmlTreeNode";
 
 export class Parser {
     private readonly WATCHED_TAGS: Map<string, RawBinaryXmlTagPair>;
@@ -16,14 +17,16 @@ export class Parser {
     public constructor(
         private config: ParserConfig
     ) {
-        const watchedXmlTagsJson: WatchedXmlTagsJson = JSON.parse(
-            fs.readFileSync(config.configFilePath, { encoding: UTF_8_ENCODING})
-        );
+        if (!config.configFile) {
+            throw new Error('No config file provided')
+        }
 
         this.WATCHED_TAGS = new Map<string, RawBinaryXmlTagPair>();
 
-        for (let i: number = 0; i < config.tags.length; i++) {
-            let xmlTag: string = config.tags[i]!;
+        let rootNode: XmlTreeNode | null = null;
+
+        for (let i: number = 0; i < config.configFile.nodes.length; i++) {
+            let xmlTag: WatchedXmlTagNode = config.configFile.nodes[i]!;
 
             /*
              * Create open and close versions of the watched XML tag
@@ -35,8 +38,15 @@ export class Parser {
             let rawBinaryXmlClosingTag: Buffer<ArrayBuffer> = Buffer.from(xmlClosingTag, UTF_8_ENCODING);
 
             const xmlTagPair: RawBinaryXmlTagPair = {
+                original: xmlTag.name,
                 open: rawBinaryXmlOpenTag,
                 close: rawBinaryXmlClosingTag
+            }
+
+            const node = new XmlTreeNode(xmlTagPair);
+
+            if (rootNode) {
+
             }
 
             /*

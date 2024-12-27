@@ -2,9 +2,29 @@
   "version": "v1",
   "nodes": [
     {
-      "name": "paxFareDetail",
-      "leafs": [
-        "totalFareAmount"
+      "name": "recommendation",
+      "type": "xml-node",
+      "children": [
+        {
+          "name": "paxFareProduct",
+          "type": "xml-node",
+          "children": [
+            {
+              "name": "paxFareDetail",
+              "type": "xml-node",
+              "children": [
+                {
+                  "name": "totalFareAmount",
+                  "type": "xml-data:number"
+                },
+                {
+                  "name": "totalTaxAmount",
+                  "type": "xml-data:number"
+                }
+              ]
+            }
+          ]
+        }
       ]
     }
   ]
