@@ -6,12 +6,10 @@
 import fs from "node:fs";
 import {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
-import {UTF_8_ENCODING} from "./Shared/constants";
-import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "./Shared/types";
+import {RawBinaryXmlTagPair} from "./Shared/types";
 import {XmlTreeNode} from "./Shared/XmlTreeNode";
 
 export class Parser {
-    private readonly WATCHED_TAGS: Map<string, RawBinaryXmlTagPair>;
     private readonly LARGEST_XML_TAG_BYTES: number = 0;
 
     public constructor(
@@ -21,34 +19,10 @@ export class Parser {
             throw new Error('No config file provided')
         }
 
-        this.WATCHED_TAGS = new Map<string, RawBinaryXmlTagPair>();
+        const watchedXmlTags: XmlTreeNode = XmlTreeNode.fromHoapConfigJson(config.configFile);
 
-        let rootNode: XmlTreeNode | null = null;
 
         for (let i: number = 0; i < config.configFile.nodes.length; i++) {
-            let xmlTag: WatchedXmlTagNode = config.configFile.nodes[i]!;
-
-            /*
-             * Create open and close versions of the watched XML tag
-             */
-            let xmlOpenTag: string = `<${xmlTag}>`;
-            let xmlClosingTag: string = `</${xmlTag}>`;
-
-            let rawBinaryXmlOpenTag: Buffer<ArrayBuffer> = Buffer.from(xmlOpenTag, UTF_8_ENCODING);
-            let rawBinaryXmlClosingTag: Buffer<ArrayBuffer> = Buffer.from(xmlClosingTag, UTF_8_ENCODING);
-
-            const xmlTagPair: RawBinaryXmlTagPair = {
-                original: xmlTag.name,
-                open: rawBinaryXmlOpenTag,
-                close: rawBinaryXmlClosingTag
-            }
-
-            const node = new XmlTreeNode(xmlTagPair);
-
-            if (rootNode) {
-
-            }
-
             /*
              * Store the largest xml tag length to avoid missing info later on chunks
              */
@@ -63,7 +37,6 @@ export class Parser {
              * Example:
              * Map<'recommendations', {open: (binary)'<recommendations>', close: (binary)'</recommendations>'}>
              */
-            this.WATCHED_TAGS.set(xmlTag, xmlTagPair);
         }
     }
 
