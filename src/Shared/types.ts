@@ -11,6 +11,7 @@ export type RawBinaryXmlTagPair = {
     close: Buffer<ArrayBuffer>,
     type: string,
     status: XmlTreeNodeStatus,
+    value: string | number | null
 };
 
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }

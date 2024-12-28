@@ -49,8 +49,9 @@ export class XmlTreeNode {
             original: tagName,
             open: Buffer.from(xmlOpenTag, UTF_8_ENCODING),
             close: Buffer.from(xmlClosingTag, UTF_8_ENCODING),
-            type,
+            type: type,
             status: XmlTreeNodeStatus.NOT_VISITED,
+            value: null,
         };
     }
 
