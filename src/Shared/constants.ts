@@ -7,7 +7,7 @@ export const UTF_8_ENCODING: BufferEncoding = "utf8";
 
 export const XML_NODE_TYPE = "xml-node";
 
-export const XML_DATA_TYPE = "xml-data";
+export const XML_DATA_TYPE = "xml-data:";
 
 export enum XmlTreeNodeStatus {
     OPEN = "OPEN",
