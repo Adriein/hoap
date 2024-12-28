@@ -14,6 +14,11 @@ export type RawBinaryXmlTagPair = {
     value: string | number | null
 };
 
+export type JsonResultData = {
+    original: string,
+    value: string | number | null,
+};
+
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }
 
 export type WatchedXmlTagsJson = { version: string, nodes: WatchedXmlTagNode[] }

@@ -8,8 +8,9 @@ import {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
 import {RawBinaryXmlTagPair} from "./Shared/types";
 import {XmlTreeNode} from "./Shared/XmlTreeNode";
-import {XmlTreeTraversal} from "./Shared/XmlTreeTraversal";
-import {XML_DATA_TYPE, XML_NODE_TYPE, XmlTreeNodeStatus} from "./Shared/constants";
+import {XmlTreeTraverser} from "./Shared/XmlTreeTraverser";
+import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE, XmlTreeNodeStatus} from "./Shared/constants";
+import {JsonTreeNode} from "./Shared/JsonTreeNode";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
@@ -26,7 +27,7 @@ export class Parser {
 
         this.WATCHED_XML_TAG_TREE = tree;
 
-        XmlTreeTraversal.dfs.call(this, tree, (node: XmlTreeNode): void => {
+        XmlTreeTraverser.dfs.call(this, tree, (node: XmlTreeNode): void => {
             /*
              * Store the largest xml tag length to avoid missing info later on chunks
              */
@@ -45,55 +46,90 @@ export class Parser {
 
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
-        const resultTree: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
+        const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
+        const resultTree: JsonTreeNode = new JsonTreeNode({original: "root", value: null});
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
+
             let securityBytesBuffer: number = this.LARGEST_XML_TAG_BYTES;
+            let parentNode: JsonTreeNode = resultTree;
 
-            XmlTreeTraversal.dfs(resultTree, (node: XmlTreeNode): void => {
-                const {type, open, close}: RawBinaryXmlTagPair = node.data;
+            console.log(chunk.toString(UTF_8_ENCODING));
 
-                if (type.includes(XML_DATA_TYPE)) {
-                    const tagMatchStack: number[][] = [];
+            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode): void => {
+                const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
-                    let openTagIndex: number = 0;
-                    let closeTagIndex: number = 0;
-                    let originalChunkIndexPosition: number = 0;
+                let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
 
-                    let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
+                let originalChunkIndexPosition: number = 0;
+                let openTagIndex: number = 0;
+                let closeTagIndex: number = 0;
 
-                    // Find the position of all matches of the same tree node in the current chunk
+                if (type === XML_NODE_TYPE) {
                     while(openTagIndex !== -1) {
                         openTagIndex = observedChunk.indexOf(open);
                         closeTagIndex = observedChunk.indexOf(close);
 
-                        // If the closing tag is found we change the position of the observation window
-                        if (closeTagIndex !== -1) {
+                        if (openTagIndex !== -1 && closeTagIndex !== -1) {
+                            const result: JsonTreeNode = new JsonTreeNode({
+                                original: original,
+                                value: null,
+                            });
+
+                            parentNode.addChild(result);
+
+                            originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
+
                             observedChunk = observedChunk.subarray(
                                 closeTagIndex + close.byteLength,
                                 chunkCombinedWithLeftover.byteLength
                             );
 
-                            originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
-
-                            // Store the index position relative to the current chunk and not the observed subarray
-                            tagMatchStack.push([
-                                openTagIndex + originalChunkIndexPosition,
-                                closeTagIndex + originalChunkIndexPosition
-                            ]);
-
-                            securityBytesBuffer = this.LARGEST_XML_TAG_BYTES;
-
                             continue;
                         }
 
-                        const leftOverWithOpenTagIncluded: Buffer<ArrayBuffer> = chunkCombinedWithLeftover.subarray(
-                            openTagIndex + originalChunkIndexPosition,
-                            chunkCombinedWithLeftover.byteLength
-                        )
+                        if (openTagIndex !== -1) {
+                            const result: JsonTreeNode = new JsonTreeNode({
+                                original: original,
+                                value: null,
+                            });
 
-                        securityBytesBuffer = chunkCombinedWithLeftover.byteLength - leftOverWithOpenTagIncluded.byteLength;
+                            parentNode.addChild(result);
+
+                            parentNode = result;
+
+                            break;
+                        }
+                    }
+
+                    parentNode = result;
+                }
+
+                if (type.includes(XML_DATA_TYPE)) {
+                    // Find the position of all matches of the same tree node in the current chunk
+                    while(openTagIndex !== -1) {
+                        openTagIndex = observedChunk.indexOf(open);
+                        closeTagIndex = observedChunk.indexOf(close);
+
+                        if (openTagIndex !== -1 && closeTagIndex !== -1) {
+                            const rawBinaryValue: Buffer<ArrayBuffer> = observedChunk.subarray(
+                                openTagIndex,
+                                closeTagIndex
+                            );
+
+                            const result: JsonTreeNode = new JsonTreeNode({
+                                original: original,
+                                value: rawBinaryValue.toString(UTF_8_ENCODING)
+                            });
+
+                            parentNode.addChild(result);
+
+                            observedChunk = observedChunk.subarray(
+                                closeTagIndex + close.byteLength,
+                                chunkCombinedWithLeftover.byteLength
+                            );
+                        }
                     }
                 }
             });

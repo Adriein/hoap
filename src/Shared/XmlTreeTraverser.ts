@@ -5,7 +5,7 @@
 
 import {XmlTreeNode} from "./XmlTreeNode";
 
-export class XmlTreeTraversal {
+export class XmlTreeTraverser {
     /**
      * Traverse with DFS algorithm a Tree from left to right
      * @param root Root node of the tree
