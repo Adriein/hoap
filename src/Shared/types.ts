@@ -3,11 +3,14 @@
  * MIT Licensed
  */
 
+import {XmlTreeNodeStatus} from "./constants";
+
 export type RawBinaryXmlTagPair = {
     original: string,
     open: Buffer<ArrayBuffer>,
     close: Buffer<ArrayBuffer>,
-    type: string
+    type: string,
+    status: XmlTreeNodeStatus,
 };
 
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }

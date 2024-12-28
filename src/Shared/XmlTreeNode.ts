@@ -4,7 +4,7 @@
  */
 
 import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "./types";
-import {UTF_8_ENCODING} from "./constants";
+import {UTF_8_ENCODING, XmlTreeNodeStatus} from "./constants";
 
 export class XmlTreeNode {
     /**
@@ -50,6 +50,7 @@ export class XmlTreeNode {
             open: Buffer.from(xmlOpenTag, UTF_8_ENCODING),
             close: Buffer.from(xmlClosingTag, UTF_8_ENCODING),
             type,
+            status: XmlTreeNodeStatus.NOT_VISITED,
         };
     }
 

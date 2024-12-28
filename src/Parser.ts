@@ -9,11 +9,10 @@ import {ParserConfig} from "./ParserConfig";
 import {RawBinaryXmlTagPair} from "./Shared/types";
 import {XmlTreeNode} from "./Shared/XmlTreeNode";
 import {XmlTreeTraversal} from "./Shared/XmlTreeTraversal";
-import {XML_NODE_TYPE} from "./Shared/constants";
 
 export class Parser {
+    private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
     private LARGEST_XML_TAG_BYTES: number = 0;
-    private WATCHED_XML_TAG_TREE: XmlTreeNode;
 
     public constructor(
         private config: ParserConfig
@@ -45,12 +44,12 @@ export class Parser {
 
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
-        const result: any = {};
+        const resultTree: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
-            XmlTreeTraversal.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode) => {
+            XmlTreeTraversal.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
                 const openTagIndex: number = chunkCombinedWithLeftover.indexOf(open);
