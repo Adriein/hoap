@@ -53,7 +53,6 @@ export class Parser {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
             let securityBytesBuffer: number = this.LARGEST_XML_TAG_BYTES;
-            let parentNode: ResultTreeNode = resultTree;
 
             XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode, depth: number): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
@@ -74,9 +73,10 @@ export class Parser {
                              * meaning that is a closing tag from another chunk 
                              */
                             if(closeTagIndex < openTagIndex) {
-                                JsonTreeTraverser.bfsToLvl(resultTree, depth, (resultNode: ResultTreeNode): void => {
+                                JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode): void => {
                                     if (resultNode.metadata.status === ParsingNodeStatus.OPEN) {
                                         resultNode.metadata.status = ParsingNodeStatus.CLOSED;
+                                        resultNode.metadata.position.close = closeTagIndex;
                                     }
                                 });
 
@@ -92,13 +92,26 @@ export class Parser {
                             
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
-                                status: ParsingNodeStatus.CLOSED,
+                                status: ParsingNodeStatus.INFORMATION_NOT_EXTRACTED,
                                 position: {open: openTagIndex, close: closeTagIndex}
                             };
 
-                            const result: ResultTreeNode = new ResultTreeNode(data, metadata);
+                            const result = new ResultTreeNode(data, metadata);
 
-                            parentNode.addChild(result);
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN) {
+                                    parentNode.addChild(result);
+
+                                    return;
+                                }
+
+                                if (
+                                    openTagIndex > parentNode.metadata.position.open &&
+                                    closeTagIndex < parentNode.metadata.position.close
+                                ) {
+                                    parentNode.addChild(result);
+                                }
+                            });
 
                             originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
 
@@ -110,17 +123,35 @@ export class Parser {
                             continue;
                         }
 
-                        const data: JsonResultData = { tagName: original, value: null };
-                        const metadata: ResultTreeMetadata = {
-                            status: ParsingNodeStatus.OPEN,
-                            position: {open: openTagIndex, close: closeTagIndex}
-                        };
+                        if (openTagIndex !== -1) {
+                            const data: JsonResultData = { tagName: original, value: null };
+                            const metadata: ResultTreeMetadata = {
+                                status: ParsingNodeStatus.OPEN,
+                                position: {open: openTagIndex, close: closeTagIndex}
+                            };
 
-                        const result: ResultTreeNode = new ResultTreeNode(data, metadata);
+                            const result = new ResultTreeNode(data, metadata);
 
-                        parentNode.addChild(result);
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN || parentNode.data.tagName === "root") {
+                                    parentNode.addChild(result);
 
-                        parentNode = result;
+                                    return;
+                                }
+
+                                if (
+                                    openTagIndex > parentNode.metadata.position.open &&
+                                    closeTagIndex < parentNode.metadata.position.close
+                                ) {
+                                    parentNode.addChild(result);
+                                }
+                            });
+
+                            observedChunk = observedChunk.subarray(
+                                openTagIndex + open.byteLength,
+                                chunkCombinedWithLeftover.byteLength
+                            );
+                        }
                     }
                 }
 
@@ -136,17 +167,36 @@ export class Parser {
                                 closeTagIndex
                             );
 
-                            const result: ResultTreeNode = new ResultTreeNode({
-                                tagName: original,
-                                value: rawBinaryValue.toString(UTF_8_ENCODING)
-                            });
-
-                            parentNode.addChild(result);
-
                             observedChunk = observedChunk.subarray(
                                 closeTagIndex + close.byteLength,
                                 chunkCombinedWithLeftover.byteLength
                             );
+
+                            const data: JsonResultData = {
+                                tagName: original,
+                                value: rawBinaryValue.toString(UTF_8_ENCODING)
+                            };
+                            const metadata: ResultTreeMetadata = {
+                                status: ParsingNodeStatus.OPEN,
+                                position: {open: openTagIndex, close: closeTagIndex}
+                            };
+
+                            const result = new ResultTreeNode(data, metadata);
+
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN) {
+                                    parentNode.addChild(result);
+
+                                    return;
+                                }
+
+                                if (
+                                    openTagIndex > parentNode.metadata.position.open &&
+                                    closeTagIndex < parentNode.metadata.position.close
+                                ) {
+                                    parentNode.addChild(result);
+                                }
+                            });
                         }
                     }
                 }

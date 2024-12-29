@@ -12,5 +12,5 @@ export const XML_DATA_TYPE = "xml-data:";
 export enum ParsingNodeStatus {
     OPEN = "OPEN",
     CLOSED = "CLOSED",
-    NOT_VISITED = "NOT_VISITED"
+    INFORMATION_NOT_EXTRACTED = "INFORMATION_NOT_EXTRACTED"
 }
