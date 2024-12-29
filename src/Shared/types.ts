@@ -3,15 +3,11 @@
  * MIT Licensed
  */
 
-import {XmlTreeNodeStatus} from "./constants";
-
 export type RawBinaryXmlTagPair = {
     original: string,
     open: Buffer<ArrayBuffer>,
     close: Buffer<ArrayBuffer>,
     type: string,
-    status: XmlTreeNodeStatus,
-    value: string | number | null
 };
 
 export type JsonResultData = {

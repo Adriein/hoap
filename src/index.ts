@@ -35,4 +35,4 @@ const config: ParserConfig = ParserConfig
 
 const hoap: Parser = new Parser(config);
 
-hoap.parse()
+hoap.parse();

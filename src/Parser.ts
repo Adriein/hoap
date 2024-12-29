@@ -55,8 +55,6 @@ export class Parser {
             let securityBytesBuffer: number = this.LARGEST_XML_TAG_BYTES;
             let parentNode: JsonTreeNode = resultTree;
 
-            console.log(chunk.toString(UTF_8_ENCODING));
-
             XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
@@ -102,8 +100,6 @@ export class Parser {
                             break;
                         }
                     }
-
-                    parentNode = result;
                 }
 
                 if (type.includes(XML_DATA_TYPE)) {
@@ -114,7 +110,7 @@ export class Parser {
 
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
                             const rawBinaryValue: Buffer<ArrayBuffer> = observedChunk.subarray(
-                                openTagIndex,
+                                openTagIndex + open.byteLength,
                                 closeTagIndex
                             );
 
@@ -138,5 +134,7 @@ export class Parser {
 
             bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
         });
+
+        console.log("finish");
     }
 }

@@ -6,6 +6,22 @@
       "type": "xml-node",
       "children": [
         {
+          "name": "itemNumber",
+          "type": "xml-node",
+          "children": [
+            {
+              "name": "itemNumberId",
+              "type": "xml-node",
+              "children": [
+                {
+                  "name": "number",
+                  "type": "xml-data:number"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "name": "paxFareProduct",
           "type": "xml-node",
           "children": [
@@ -20,6 +36,16 @@
                 {
                   "name": "totalTaxAmount",
                   "type": "xml-data:number"
+                },
+                {
+                  "name": "codeShareDetails",
+                  "type": "xml-node",
+                  "children": [
+                    {
+                      "name": "company",
+                      "type": "xml-data:string"
+                    }
+                  ]
                 }
               ]
             }
