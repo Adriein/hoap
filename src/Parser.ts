@@ -3,14 +3,14 @@
  * MIT Licensed
  */
 
-import fs from "node:fs";
-import {ReadStream} from "node:fs";
+import fs, {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
-import {RawBinaryXmlTagPair} from "./Shared/types";
+import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "./Shared/types";
 import {XmlTreeNode} from "./Shared/XmlTreeNode";
 import {XmlTreeTraverser} from "./Shared/XmlTreeTraverser";
-import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE, XmlTreeNodeStatus} from "./Shared/constants";
-import {JsonTreeNode} from "./Shared/JsonTreeNode";
+import {ParsingNodeStatus, UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/constants";
+import {ResultTreeNode} from "./Shared/ResultTreeNode";
+import {JsonTreeTraverser} from "./Shared/JsonTreeTraverser";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
@@ -47,15 +47,15 @@ export class Parser {
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
         const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
-        const resultTree: JsonTreeNode = new JsonTreeNode({original: "root", value: null});
+        const resultTree: ResultTreeNode = ResultTreeNode.init();
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
             let securityBytesBuffer: number = this.LARGEST_XML_TAG_BYTES;
-            let parentNode: JsonTreeNode = resultTree;
+            let parentNode: ResultTreeNode = resultTree;
 
-            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode): void => {
+            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode, depth: number): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
                 let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
@@ -70,10 +70,33 @@ export class Parser {
                         closeTagIndex = observedChunk.indexOf(close);
 
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
-                            const result: JsonTreeNode = new JsonTreeNode({
-                                original: original,
-                                value: null,
-                            });
+                            /* The closing tag index is greater than opening tag 
+                             * meaning that is a closing tag from another chunk 
+                             */
+                            if(closeTagIndex < openTagIndex) {
+                                JsonTreeTraverser.bfsToLvl(resultTree, depth, (resultNode: ResultTreeNode): void => {
+                                    if (resultNode.metadata.status === ParsingNodeStatus.OPEN) {
+                                        resultNode.metadata.status = ParsingNodeStatus.CLOSED;
+                                    }
+                                });
+
+                                originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
+
+                                observedChunk = observedChunk.subarray(
+                                    closeTagIndex + close.byteLength,
+                                    chunkCombinedWithLeftover.byteLength
+                                );
+
+                                continue;
+                            }
+                            
+                            const data: JsonResultData = { tagName: original, value: null };
+                            const metadata: ResultTreeMetadata = {
+                                status: ParsingNodeStatus.CLOSED,
+                                position: {open: openTagIndex, close: closeTagIndex}
+                            };
+
+                            const result: ResultTreeNode = new ResultTreeNode(data, metadata);
 
                             parentNode.addChild(result);
 
@@ -87,18 +110,17 @@ export class Parser {
                             continue;
                         }
 
-                        if (openTagIndex !== -1) {
-                            const result: JsonTreeNode = new JsonTreeNode({
-                                original: original,
-                                value: null,
-                            });
+                        const data: JsonResultData = { tagName: original, value: null };
+                        const metadata: ResultTreeMetadata = {
+                            status: ParsingNodeStatus.OPEN,
+                            position: {open: openTagIndex, close: closeTagIndex}
+                        };
 
-                            parentNode.addChild(result);
+                        const result: ResultTreeNode = new ResultTreeNode(data, metadata);
 
-                            parentNode = result;
+                        parentNode.addChild(result);
 
-                            break;
-                        }
+                        parentNode = result;
                     }
                 }
 
@@ -114,8 +136,8 @@ export class Parser {
                                 closeTagIndex
                             );
 
-                            const result: JsonTreeNode = new JsonTreeNode({
-                                original: original,
+                            const result: ResultTreeNode = new ResultTreeNode({
+                                tagName: original,
                                 value: rawBinaryValue.toString(UTF_8_ENCODING)
                             });
 

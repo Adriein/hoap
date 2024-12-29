@@ -3,6 +3,8 @@
  * MIT Licensed
  */
 
+import {ParsingNodeStatus} from "./constants";
+
 export type RawBinaryXmlTagPair = {
     original: string,
     open: Buffer<ArrayBuffer>,
@@ -11,9 +13,14 @@ export type RawBinaryXmlTagPair = {
 };
 
 export type JsonResultData = {
-    original: string,
+    tagName: string,
     value: string | number | null,
 };
+
+export type ResultTreeMetadata = {
+    status: ParsingNodeStatus,
+    position: { open: number, close: number },
+}
 
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }
 

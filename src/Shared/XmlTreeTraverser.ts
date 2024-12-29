@@ -12,13 +12,14 @@ export class XmlTreeTraverser {
      * @param fn Callback function to execute when visiting each node
      * @returns void
      */
-    public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode) => void): void {
+    public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode, depth: number) => void): void {
         const stack: XmlTreeNode[] = [root];
+        let depth: number = 0;
 
         while (stack.length > 0) {
             const node: XmlTreeNode = stack.pop()!;
 
-            fn(node);
+            fn(node, depth);
 
             for (let i = node.children.length - 1; i >= 0; i--) {
                 if (!node.children[i]) {
@@ -27,6 +28,8 @@ export class XmlTreeTraverser {
 
                 stack.push(node.children[i]!);
             }
+
+            depth++;
         }
     }
 }
