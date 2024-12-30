@@ -3,8 +3,6 @@
  * MIT Licensed
  */
 
-import {ParsingNodeStatus} from "./constants";
-
 export type RawBinaryXmlTagPair = {
     original: string,
     open: Buffer<ArrayBuffer>,
@@ -18,7 +16,6 @@ export type JsonResultData = {
 };
 
 export type ResultTreeMetadata = {
-    status: ParsingNodeStatus,
     position: { open: number, close: number },
 }
 

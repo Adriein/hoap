@@ -5,7 +5,6 @@
 
 
 import {JsonResultData, ResultTreeMetadata} from "./types";
-import {ParsingNodeStatus} from "./constants";
 
 export class ResultTreeNode {
     public static init(): ResultTreeNode {
@@ -16,7 +15,6 @@ export class ResultTreeNode {
             },
             {
                 position: { open: -1, close: -1 },
-                status: ParsingNodeStatus.CLOSED
             },
         )
     }

@@ -8,7 +8,7 @@ import {ParserConfig} from "./ParserConfig";
 import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "./Shared/types";
 import {XmlTreeNode} from "./Shared/XmlTreeNode";
 import {XmlTreeTraverser} from "./Shared/XmlTreeTraverser";
-import {ParsingNodeStatus, UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/constants";
+import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/constants";
 import {ResultTreeNode} from "./Shared/ResultTreeNode";
 import {JsonTreeTraverser} from "./Shared/JsonTreeTraverser";
 
@@ -89,7 +89,6 @@ export class Parser {
                             
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
-                                status: ParsingNodeStatus.INFORMATION_NOT_EXTRACTED,
                                 position: {
                                     open: openTagIndex + globalIndexPosition,
                                     close: closeTagIndex + globalIndexPosition
@@ -124,7 +123,6 @@ export class Parser {
                         if (openTagIndex !== -1) {
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
-                                status: ParsingNodeStatus.OPEN,
                                 position: {
                                     open: openTagIndex + globalIndexPosition,
                                     close: closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition,
@@ -178,7 +176,6 @@ export class Parser {
                                 value: rawBinaryValue.toString(UTF_8_ENCODING)
                             };
                             const metadata: ResultTreeMetadata = {
-                                status: ParsingNodeStatus.OPEN,
                                 position: {
                                     open: openTagIndex + globalIndexPosition,
                                     close: closeTagIndex + globalIndexPosition

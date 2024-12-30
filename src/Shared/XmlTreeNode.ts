@@ -4,7 +4,7 @@
  */
 
 import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "./types";
-import {UTF_8_ENCODING, ParsingNodeStatus} from "./constants";
+import {UTF_8_ENCODING} from "./constants";
 
 export class XmlTreeNode {
     /**
