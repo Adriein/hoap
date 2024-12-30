@@ -59,6 +59,7 @@ export class Parser {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
                 let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
+                let subtractedChunkBytes: number = 0;
 
                 let openTagIndex: number = 0;
                 let closeTagIndex: number = 0;
@@ -78,11 +79,14 @@ export class Parser {
                                         resultNode.metadata.position.close = closeTagIndex + globalIndexPosition;
                                     }
                                 });
+                                const currentObservedChunkBytes: number = observedChunk.byteLength;
 
                                 observedChunk = observedChunk.subarray(
                                     closeTagIndex + close.byteLength,
                                     chunkCombinedWithLeftover.byteLength
                                 );
+
+                                subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
 
                                 continue;
                             }
@@ -90,42 +94,8 @@ export class Parser {
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
                                 position: {
-                                    open: openTagIndex + globalIndexPosition,
-                                    close: closeTagIndex + globalIndexPosition
-                                }
-                            };
-
-                            const result = new ResultTreeNode(data, metadata);
-
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
-                                if (parentNode.metadata.position.close === -1) {
-                                    parentNode.addChild(result);
-
-                                    return
-                                }
-
-                                if (
-                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
-                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
-                                ) {
-                                    parentNode.addChild(result);
-                                }
-                            });
-
-                            observedChunk = observedChunk.subarray(
-                                closeTagIndex + close.byteLength,
-                                chunkCombinedWithLeftover.byteLength
-                            );
-
-                            continue;
-                        }
-
-                        if (openTagIndex !== -1) {
-                            const data: JsonResultData = { tagName: original, value: null };
-                            const metadata: ResultTreeMetadata = {
-                                position: {
-                                    open: openTagIndex + globalIndexPosition,
-                                    close: closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition,
+                                    open: openTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                    close: closeTagIndex + globalIndexPosition + subtractedChunkBytes
                                 }
                             };
 
@@ -139,17 +109,59 @@ export class Parser {
                                 }
 
                                 if (
-                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
-                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
+                                    openTagIndex + globalIndexPosition + subtractedChunkBytes > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition + + subtractedChunkBytes < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
                                 }
                             });
 
+                            const currentObservedChunkBytes: number = observedChunk.byteLength;
+
+                            observedChunk = observedChunk.subarray(
+                                closeTagIndex + close.byteLength,
+                                chunkCombinedWithLeftover.byteLength
+                            );
+
+                            subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
+
+                            continue;
+                        }
+
+                        if (openTagIndex !== -1) {
+                            const data: JsonResultData = { tagName: original, value: null };
+                            const metadata: ResultTreeMetadata = {
+                                position: {
+                                    open: openTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                    close: closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                }
+                            };
+
+                            const result = new ResultTreeNode(data, metadata);
+
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                                if (parentNode.metadata.position.close === -1) {
+                                    parentNode.addChild(result);
+
+                                    return;
+                                }
+
+                                if (
+                                    openTagIndex + globalIndexPosition + subtractedChunkBytes > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition + subtractedChunkBytes < parentNode.metadata.position.close
+                                ) {
+                                    parentNode.addChild(result);
+                                }
+                            });
+
+                            const currentObservedChunkBytes: number = observedChunk.byteLength;
+
                             observedChunk = observedChunk.subarray(
                                 openTagIndex + open.byteLength,
                                 chunkCombinedWithLeftover.byteLength
                             );
+
+                            subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
                         }
                     }
                 }
@@ -166,19 +178,14 @@ export class Parser {
                                 closeTagIndex
                             );
 
-                            observedChunk = observedChunk.subarray(
-                                closeTagIndex + close.byteLength,
-                                chunkCombinedWithLeftover.byteLength
-                            );
-
                             const data: JsonResultData = {
                                 tagName: original,
                                 value: rawBinaryValue.toString(UTF_8_ENCODING)
                             };
                             const metadata: ResultTreeMetadata = {
                                 position: {
-                                    open: openTagIndex + globalIndexPosition,
-                                    close: closeTagIndex + globalIndexPosition
+                                    open: openTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                    close: closeTagIndex + globalIndexPosition + subtractedChunkBytes
                                 }
                             };
 
@@ -192,12 +199,21 @@ export class Parser {
                                 }
 
                                 if (
-                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
-                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
+                                    openTagIndex + globalIndexPosition + subtractedChunkBytes > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition + subtractedChunkBytes < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
                                 }
                             });
+
+                            const currentObservedChunkBytes: number = observedChunk.byteLength;
+
+                            observedChunk = observedChunk.subarray(
+                                closeTagIndex + close.byteLength,
+                                chunkCombinedWithLeftover.byteLength
+                            );
+
+                            subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
                         }
                     }
                 }
