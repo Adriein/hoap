@@ -74,8 +74,7 @@ export class Parser {
                              */
                             if(closeTagIndex < openTagIndex) {
                                 JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode): void => {
-                                    if (resultNode.metadata.status === ParsingNodeStatus.OPEN) {
-                                        resultNode.metadata.status = ParsingNodeStatus.CLOSED;
+                                    if (resultNode.metadata.position.close === -1) {
                                         resultNode.metadata.position.close = closeTagIndex + globalIndexPosition;
                                     }
                                 });
@@ -100,10 +99,10 @@ export class Parser {
                             const result = new ResultTreeNode(data, metadata);
 
                             JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
-                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN) {
+                                if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
-                                    return;
+                                    return
                                 }
 
                                 if (
@@ -128,14 +127,14 @@ export class Parser {
                                 status: ParsingNodeStatus.OPEN,
                                 position: {
                                     open: openTagIndex + globalIndexPosition,
-                                    close: closeTagIndex +globalIndexPosition
+                                    close: closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition,
                                 }
                             };
 
                             const result = new ResultTreeNode(data, metadata);
 
                             JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
-                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN || parentNode.data.tagName === "root") {
+                                if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
                                     return;
@@ -189,10 +188,10 @@ export class Parser {
                             const result = new ResultTreeNode(data, metadata);
 
                             JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
-                                if (parentNode.metadata.status === ParsingNodeStatus.OPEN) {
+                                if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
-                                    return;
+                                    return
                                 }
 
                                 if (

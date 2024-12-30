@@ -13,23 +13,21 @@ export class XmlTreeTraverser {
      * @returns void
      */
     public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode, depth: number) => void): void {
-        const stack: XmlTreeNode[] = [root];
-        let depth: number = 0;
+        const stack: Array<[XmlTreeNode, number]> = [[root, 0]];
 
         while (stack.length > 0) {
-            const node: XmlTreeNode = stack.pop()!;
+            const [node, currentDepth] = stack.pop()!;
 
-            fn(node, depth);
+            fn(node, currentDepth);
 
+            // Push children with incremented depth
             for (let i = node.children.length - 1; i >= 0; i--) {
                 if (!node.children[i]) {
                     continue;
                 }
 
-                stack.push(node.children[i]!);
+                stack.push([node.children[i]!, currentDepth + 1]);
             }
-
-            depth++;
         }
     }
 }
