@@ -48,6 +48,7 @@ export class Parser {
 
         const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
         const resultTree: ResultTreeNode = ResultTreeNode.init();
+        let globalIndexPosition: number = 0;
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
             const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
@@ -59,7 +60,6 @@ export class Parser {
 
                 let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
 
-                let originalChunkIndexPosition: number = 0;
                 let openTagIndex: number = 0;
                 let closeTagIndex: number = 0;
 
@@ -76,11 +76,9 @@ export class Parser {
                                 JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode): void => {
                                     if (resultNode.metadata.status === ParsingNodeStatus.OPEN) {
                                         resultNode.metadata.status = ParsingNodeStatus.CLOSED;
-                                        resultNode.metadata.position.close = closeTagIndex;
+                                        resultNode.metadata.position.close = closeTagIndex + globalIndexPosition;
                                     }
                                 });
-
-                                originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
 
                                 observedChunk = observedChunk.subarray(
                                     closeTagIndex + close.byteLength,
@@ -93,7 +91,10 @@ export class Parser {
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
                                 status: ParsingNodeStatus.INFORMATION_NOT_EXTRACTED,
-                                position: {open: openTagIndex, close: closeTagIndex}
+                                position: {
+                                    open: openTagIndex + globalIndexPosition,
+                                    close: closeTagIndex + globalIndexPosition
+                                }
                             };
 
                             const result = new ResultTreeNode(data, metadata);
@@ -106,14 +107,12 @@ export class Parser {
                                 }
 
                                 if (
-                                    openTagIndex > parentNode.metadata.position.open &&
-                                    closeTagIndex < parentNode.metadata.position.close
+                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
                                 }
                             });
-
-                            originalChunkIndexPosition = closeTagIndex + close.byteLength + originalChunkIndexPosition;
 
                             observedChunk = observedChunk.subarray(
                                 closeTagIndex + close.byteLength,
@@ -127,7 +126,10 @@ export class Parser {
                             const data: JsonResultData = { tagName: original, value: null };
                             const metadata: ResultTreeMetadata = {
                                 status: ParsingNodeStatus.OPEN,
-                                position: {open: openTagIndex, close: closeTagIndex}
+                                position: {
+                                    open: openTagIndex + globalIndexPosition,
+                                    close: closeTagIndex +globalIndexPosition
+                                }
                             };
 
                             const result = new ResultTreeNode(data, metadata);
@@ -140,8 +142,8 @@ export class Parser {
                                 }
 
                                 if (
-                                    openTagIndex > parentNode.metadata.position.open &&
-                                    closeTagIndex < parentNode.metadata.position.close
+                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
                                 }
@@ -178,7 +180,10 @@ export class Parser {
                             };
                             const metadata: ResultTreeMetadata = {
                                 status: ParsingNodeStatus.OPEN,
-                                position: {open: openTagIndex, close: closeTagIndex}
+                                position: {
+                                    open: openTagIndex + globalIndexPosition,
+                                    close: closeTagIndex + globalIndexPosition
+                                }
                             };
 
                             const result = new ResultTreeNode(data, metadata);
@@ -191,8 +196,8 @@ export class Parser {
                                 }
 
                                 if (
-                                    openTagIndex > parentNode.metadata.position.open &&
-                                    closeTagIndex < parentNode.metadata.position.close
+                                    openTagIndex + globalIndexPosition > parentNode.metadata.position.open &&
+                                    closeTagIndex + globalIndexPosition < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
                                 }
@@ -205,8 +210,12 @@ export class Parser {
             const start: number = chunkCombinedWithLeftover.byteLength - securityBytesBuffer;
 
             bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
+
+            globalIndexPosition = globalIndexPosition + chunk.byteLength;
         });
 
-        console.log("finish");
+        stream.on("end", (): void => {
+            console.log(resultTree);
+        });
     }
 }
