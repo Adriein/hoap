@@ -5,12 +5,12 @@
 
 import fs, {ReadStream} from "node:fs";
 import {ParserConfig} from "./ParserConfig";
-import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "./Shared/types";
-import {XmlTreeNode} from "./Shared/XmlTreeNode";
-import {XmlTreeTraverser} from "./Shared/XmlTreeTraverser";
-import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/constants";
-import {ResultTreeNode} from "./Shared/ResultTreeNode";
-import {JsonTreeTraverser} from "./Shared/JsonTreeTraverser";
+import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "./Shared/Types";
+import {XmlTreeNode} from "./Shared/Tree/XmlTreeNode";
+import {XmlTreeTraverser} from "./Shared/Tree/XmlTreeTraverser";
+import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/Constants";
+import {ResultTreeNode} from "./Shared/Tree/ResultTreeNode";
+import {JsonTreeTraverser} from "./Shared/Tree/JsonTreeTraverser";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;

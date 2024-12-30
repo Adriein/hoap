@@ -7,8 +7,8 @@ import HoapParser from "./HoapParser";
 import fs from "fs";
 import {Parser} from "./Parser";
 import {ParserConfig} from "./ParserConfig";
-import {WatchedXmlTagsJson} from "./Shared/types";
-import {UTF_8_ENCODING} from "./Shared/constants";
+import {WatchedXmlTagsJson} from "./Shared/Types";
+import {UTF_8_ENCODING} from "./Shared/Constants";
 
 /*const hoap: HoapParser = new HoapParser();
 

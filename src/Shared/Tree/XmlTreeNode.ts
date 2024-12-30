@@ -3,8 +3,8 @@
  * MIT Licensed
  */
 
-import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "./types";
-import {UTF_8_ENCODING} from "./constants";
+import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "../Types";
+import {UTF_8_ENCODING} from "../Constants";
 
 export class XmlTreeNode {
     /**

@@ -4,7 +4,7 @@
  */
 
 
-import {JsonResultData, ResultTreeMetadata} from "./types";
+import {JsonResultData, ResultTreeMetadata} from "../Types";
 
 export class ResultTreeNode {
     public static init(): ResultTreeNode {
@@ -14,7 +14,7 @@ export class ResultTreeNode {
                 value: null
             },
             {
-                position: { open: -1, close: -1 },
+                position: { open: 0, close: -1 },
             },
         )
     }
@@ -39,5 +39,13 @@ export class ResultTreeNode {
 
     public addChild(node: ResultTreeNode): void {
         this._children.push(node);
+    }
+
+    public isInRange(openTagIndex: number, closeTagIndex: number): boolean {
+        if (openTagIndex >= this._metadata.position.open && closeTagIndex === -1) {
+            return true;
+        }
+
+        return openTagIndex >= this._metadata.position.open && closeTagIndex <= this._metadata.position.close;
     }
 }
