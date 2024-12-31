@@ -16,7 +16,7 @@ import {InstructionTreeBuilder} from "./InstructionTreeBuilder";
 export class Parser {
     private WATCHED_XML_TAG_TREE: XmlTreeNode;
     private LARGEST_XML_TAG_BYTES: number = 0;
-    private RESULT_TREE_HASH_MAP: Map<string, ResultTreeNode | null> = new Map<string, ResultTreeNode | null>();
+    private RESULT_TREE_HASH_MAP: Map<string, ResultTreeNode[]> = new Map<string, ResultTreeNode[]>();
 
     public constructor(
         private config: ParserConfig
@@ -28,10 +28,6 @@ export class Parser {
         const tree: XmlTreeNode = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
 
         this.WATCHED_XML_TAG_TREE = tree;
-
-        for (let i: number = 0; i < InstructionTreeBuilder.HASH_MAP_KEYS.length; i++) {
-            this.RESULT_TREE_HASH_MAP.set(InstructionTreeBuilder.HASH_MAP_KEYS[i]!, null);
-        }
 
         XmlTreeTraverser.dfs.call(this, tree, (node: XmlTreeNode): void => {
             /*
@@ -54,6 +50,8 @@ export class Parser {
 
         const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
         const resultTree: ResultTreeNode = ResultTreeNode.init();
+
+        this.RESULT_TREE_HASH_MAP.set("root", [resultTree]);
 
         let globalIndexPosition: number = 0;
 
@@ -89,6 +87,8 @@ export class Parser {
                                     }
                                 });*/
 
+                                this.closeOpenNode(path, closeTagIndex + globalIndexPosition);
+
                                 const currentObservedChunkBytes: number = observedChunk.byteLength;
 
                                 observedChunk = observedChunk.subarray(
@@ -110,6 +110,8 @@ export class Parser {
                             };
 
                             const result = new ResultTreeNode(data, metadata);
+
+                            this.insert(path, result);
 
                             /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
@@ -150,6 +152,8 @@ export class Parser {
                             };
 
                             const result = new ResultTreeNode(data, metadata);
+
+                            this.insert(path, result);
 
                             /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
@@ -205,6 +209,8 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
+                            this.insert(path, result);
+
                             /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
@@ -245,5 +251,71 @@ export class Parser {
         stream.on("end", (): void => {
             console.log(resultTree);
         });
+    }
+
+    private insert(path: string, node: ResultTreeNode): void {
+        if (path.includes("paxFareProduct")) {
+            console.log("a");
+        }
+        const nodes: ResultTreeNode[] | undefined = this.RESULT_TREE_HASH_MAP.get(path);
+
+        if (!nodes) {
+            this.RESULT_TREE_HASH_MAP.set(path, [node]);
+        } else {
+            nodes!.push(node);
+        }
+
+
+        const parentLvlKey: string = path.substring(0, path.lastIndexOf("/"));
+
+        const parents: ResultTreeNode[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
+
+        if (!parents) {
+            throw new Error('Invalid or empty array');
+        }
+
+        if (node.metadata.position.close === -1) {
+            for (let i: number = 0; i < parents.length; i++) {
+                const parent: ResultTreeNode = parents[i]!;
+
+                if (parent.metadata.position.close === -1) {
+                    parent.addChild(node);
+
+                    break;
+                }
+            }
+
+            return;
+        }
+
+        for (let i: number = 0; i < parents.length; i++) {
+            const parent: ResultTreeNode = parents[i]!;
+
+            if (parent.metadata.position.close === -1) {
+                parent.addChild(node);
+
+                break;
+            }
+
+            if (parent.isInRange(node.metadata.position.open, node.metadata.position.close)) {
+                parent.addChild(node);
+
+                break;
+            }
+        }
+    }
+
+    private closeOpenNode(path: string, closeIndexPosition: number): void {
+        const nodes: ResultTreeNode[] = this.RESULT_TREE_HASH_MAP.get(path)!;
+
+        for (let i: number = 0; i < nodes.length; i++) {
+            const node: ResultTreeNode = nodes[i]!;
+
+            if (node.metadata.position.close === -1) {
+                node.metadata.position.close = closeIndexPosition;
+
+                break;
+            }
+        }
     }
 }

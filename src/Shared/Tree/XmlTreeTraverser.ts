@@ -13,7 +13,7 @@ export class XmlTreeTraverser {
      * @returns void
      */
     public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode, path: string) => void): void {
-        const queue: Array<[XmlTreeNode, string]> = [[root, "root"]];
+        const queue: Array<[XmlTreeNode, string]> = [[root, root.data.original]];
         const currentPath: string[] = [];
 
         while (queue.length > 0) {

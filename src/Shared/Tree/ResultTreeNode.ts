@@ -42,10 +42,6 @@ export class ResultTreeNode {
     }
 
     public isInRange(openTagIndex: number, closeTagIndex: number): boolean {
-        if (openTagIndex >= this._metadata.position.open && closeTagIndex === -1) {
-            return true;
-        }
-
-        return openTagIndex >= this._metadata.position.open && closeTagIndex <= this._metadata.position.close;
+        return this._metadata.position.open <= openTagIndex && this._metadata.position.close >= closeTagIndex;
     }
 }
