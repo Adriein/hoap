@@ -11,10 +11,12 @@ import {XmlTreeTraverser} from "./Shared/Tree/XmlTreeTraverser";
 import {UTF_8_ENCODING, XML_DATA_TYPE, XML_NODE_TYPE} from "./Shared/Constants";
 import {ResultTreeNode} from "./Shared/Tree/ResultTreeNode";
 import {JsonTreeTraverser} from "./Shared/Tree/JsonTreeTraverser";
+import {InstructionTreeBuilder} from "./InstructionTreeBuilder";
 
 export class Parser {
-    private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
+    private WATCHED_XML_TAG_TREE: XmlTreeNode;
     private LARGEST_XML_TAG_BYTES: number = 0;
+    private RESULT_TREE_HASH_MAP: Map<string, ResultTreeNode | null> = new Map<string, ResultTreeNode | null>();
 
     public constructor(
         private config: ParserConfig
@@ -23,9 +25,13 @@ export class Parser {
             throw new Error('No config file provided')
         }
 
-        const tree: XmlTreeNode = XmlTreeNode.fromHoapConfigJson(config.configFile);
+        const tree: XmlTreeNode = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
 
         this.WATCHED_XML_TAG_TREE = tree;
+
+        for (let i: number = 0; i < InstructionTreeBuilder.HASH_MAP_KEYS.length; i++) {
+            this.RESULT_TREE_HASH_MAP.set(InstructionTreeBuilder.HASH_MAP_KEYS[i]!, null);
+        }
 
         XmlTreeTraverser.dfs.call(this, tree, (node: XmlTreeNode): void => {
             /*
@@ -48,6 +54,7 @@ export class Parser {
 
         const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
         const resultTree: ResultTreeNode = ResultTreeNode.init();
+
         let globalIndexPosition: number = 0;
 
         stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
@@ -55,7 +62,7 @@ export class Parser {
 
             let securityBytesBuffer: number = this.LARGEST_XML_TAG_BYTES;
 
-            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode, depth: number): void => {
+            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode, path: string): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
                 let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
@@ -74,13 +81,13 @@ export class Parser {
                              * meaning that is a closing tag from another chunk 
                              */
                             if(closeTagIndex < openTagIndex) {
-                                JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode, cancel: () => void): void => {
+                                /*JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode, cancel: () => void): void => {
                                     if (resultNode.metadata.position.close === -1) {
                                         resultNode.metadata.position.close = closeTagIndex + globalIndexPosition;
 
                                         cancel();
                                     }
-                                });
+                                });*/
 
                                 const currentObservedChunkBytes: number = observedChunk.byteLength;
 
@@ -104,7 +111,7 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
+                            /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
@@ -119,7 +126,7 @@ export class Parser {
 
                                     cancel();
                                 }
-                            });
+                            });*/
 
                             const currentObservedChunkBytes: number = observedChunk.byteLength;
 
@@ -144,7 +151,7 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
+                            /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
@@ -159,7 +166,7 @@ export class Parser {
 
                                     cancel();
                                 }
-                            });
+                            });*/
 
                             const currentObservedChunkBytes: number = observedChunk.byteLength;
 
@@ -198,7 +205,7 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
+                            /*JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
@@ -213,7 +220,7 @@ export class Parser {
 
                                     cancel();
                                 }
-                            });
+                            });*/
 
                             const currentObservedChunkBytes: number = observedChunk.byteLength;
 

@@ -12,22 +12,32 @@ export class XmlTreeTraverser {
      * @param fn Callback function to execute when visiting each node
      * @returns void
      */
-    public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode, depth: number) => void): void {
-        const queue: Array<[XmlTreeNode, number]> = [[root, 0]];
+    public static dfs(root: XmlTreeNode, fn: (node: XmlTreeNode, path: string) => void): void {
+        const queue: Array<[XmlTreeNode, string]> = [[root, "root"]];
+        const currentPath: string[] = [];
 
         while (queue.length > 0) {
-            const [node, currentDepth] = queue.pop()!;
+            const [node, path] = queue.pop()!;
 
-            fn(node, currentDepth);
+            currentPath.push(path);
 
-            // Push children with incremented depth
-            for (let i = node.children.length - 1; i >= 0; i--) {
+            fn(node, currentPath.join("/"));
+
+            for (let i: number = node.children.length - 1; i >= 0; i--) {
                 if (!node.children[i]) {
+                    currentPath.pop();
+
                     continue;
                 }
 
-                queue.push([node.children[i]!, currentDepth + 1]);
+                currentPath.push(node.children[i]!.data.original)
+
+                queue.push([node.children[i]!, currentPath.join("/")]);
+
+                currentPath.pop();
             }
+
+            currentPath.pop();
         }
     }
 }

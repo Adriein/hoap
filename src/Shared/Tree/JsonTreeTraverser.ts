@@ -4,7 +4,6 @@
  */
 
 import {ResultTreeNode} from "./ResultTreeNode";
-import {XmlTreeNode} from "./XmlTreeNode";
 import {FlowControlError} from "../Error/FlowControlError";
 
 export class JsonTreeTraverser {
