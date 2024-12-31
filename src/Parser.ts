@@ -74,11 +74,14 @@ export class Parser {
                              * meaning that is a closing tag from another chunk 
                              */
                             if(closeTagIndex < openTagIndex) {
-                                JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode): void => {
+                                JsonTreeTraverser.bfsToLvl(resultTree, depth + 1, (resultNode: ResultTreeNode, cancel: () => void): void => {
                                     if (resultNode.metadata.position.close === -1) {
                                         resultNode.metadata.position.close = closeTagIndex + globalIndexPosition;
+
+                                        cancel();
                                     }
                                 });
+
                                 const currentObservedChunkBytes: number = observedChunk.byteLength;
 
                                 observedChunk = observedChunk.subarray(
@@ -101,18 +104,20 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
-                                    return;
+                                    cancel();
                                 }
 
                                 if (
                                     openTagIndex + globalIndexPosition + subtractedChunkBytes > parentNode.metadata.position.open &&
                                     closeTagIndex + globalIndexPosition + + subtractedChunkBytes < parentNode.metadata.position.close
                                 ) {
-                                    parentNode.addChild(result);
+                                    parentNode.addChild(result)
+
+                                    cancel();
                                 }
                             });
 
@@ -139,11 +144,11 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
-                                    return;
+                                    cancel();
                                 }
 
                                 if (
@@ -151,6 +156,8 @@ export class Parser {
                                     closeTagIndex + globalIndexPosition + subtractedChunkBytes < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
+
+                                    cancel();
                                 }
                             });
 
@@ -191,11 +198,11 @@ export class Parser {
 
                             const result = new ResultTreeNode(data, metadata);
 
-                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode): void => {
+                            JsonTreeTraverser.bfsToLvl(resultTree, depth, (parentNode: ResultTreeNode, cancel: () => void): void => {
                                 if (parentNode.metadata.position.close === -1) {
                                     parentNode.addChild(result);
 
-                                    return
+                                    cancel();
                                 }
 
                                 if (
@@ -203,6 +210,8 @@ export class Parser {
                                     closeTagIndex + globalIndexPosition + subtractedChunkBytes < parentNode.metadata.position.close
                                 ) {
                                     parentNode.addChild(result);
+
+                                    cancel();
                                 }
                             });
 

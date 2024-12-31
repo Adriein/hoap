@@ -5,6 +5,7 @@
 
 import {ResultTreeNode} from "./ResultTreeNode";
 import {XmlTreeNode} from "./XmlTreeNode";
+import {FlowControlError} from "../Error/FlowControlError";
 
 export class JsonTreeTraverser {
     /**
@@ -39,23 +40,36 @@ export class JsonTreeTraverser {
      * @param fn Callback function to execute when visiting each node
      * @returns void
      */
-    public static bfsToLvl(root: ResultTreeNode, lvl: number, fn: (node: ResultTreeNode) => void): void {
+    public static bfsToLvl(
+        root: ResultTreeNode,
+        lvl: number,
+        fn: (node: ResultTreeNode, cancel: () => void) => void
+    ): void {
+        const cancel: () => void = (): void => { throw new FlowControlError(); }
         const stack: Array<[ResultTreeNode, number]> = [[root, 0]];
 
-        while (stack.length > 0) {
-            const [node, currentDepth]: [ResultTreeNode, number] = stack.shift()!;
+        try {
+            while (stack.length > 0) {
+                const [node, currentDepth]: [ResultTreeNode, number] = stack.shift()!;
 
-            if(currentDepth === lvl) {
-                fn(node);
-            }
-
-            for (let i: number = 0; i < node.children.length; i++) {
-                if (!node.children[i]) {
-                    continue;
+                if(currentDepth === lvl) {
+                    fn(node, cancel);
                 }
 
-                stack.push([node.children[i]!, currentDepth + 1]);
+                for (let i: number = 0; i < node.children.length; i++) {
+                    if (!node.children[i]) {
+                        continue;
+                    }
+
+                    stack.push([node.children[i]!, currentDepth + 1]);
+                }
             }
+        } catch (error: unknown) {
+            if (error instanceof FlowControlError) {
+                return;
+            }
+
+            throw error;
         }
     }
 
