@@ -1,22 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
                xmlns:awsse="http://xml.amadeus.com/2010/06/Session_v3" xmlns:wsa="http://www.w3.org/2005/08/addressing">
-    <soap:Header>
-        <wsa:To>http://www.w3.org/2005/08/addressing/anonymous</wsa:To>
-        <wsa:From>
-            <wsa:Address>https://test.test.webservices.amadeus.com/1ASIWMMPE8X</wsa:Address>
-        </wsa:From>
-        <wsa:Action>http://webservices.amadeus.com/FMPTBQ_19_3_1A</wsa:Action>
-        <wsa:MessageID>urn:uuid:07b5ecd9-efb6-6cd4-556f-2c66bdf91c7f</wsa:MessageID>
-        <wsa:RelatesTo RelationshipType="http://www.w3.org/2005/08/addressing/reply">
-            1e3df400c9d05fd87ee5ef679d68a599ad1b2fc77dda0022388ef7ef2633925f
-        </wsa:RelatesTo>
-        <awsse:Session TransactionStatusCode="End">
-            <awsse:SessionId>XXXXXX</awsse:SessionId>
-            <awsse:SequenceNumber>1</awsse:SequenceNumber>
-            <awsse:SecurityToken>XXXXXXXXXXXX</awsse:SecurityToken>
-        </awsse:Session>
-    </soap:Header>
     <soap:Body>
         <Fare_MasterPricerTravelBoardSearchReply xmlns="http://xml.amadeus.com/FMPTBR_19_3_1A">
             <replyStatus>
