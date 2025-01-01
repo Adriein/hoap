@@ -4,14 +4,14 @@
  */
 
 import fs, {ReadStream} from "node:fs";
-import {ParserConfig} from "./ParserConfig";
-import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "./Shared/Types";
-import {XmlTreeNode} from "./Shared/Tree/XmlTreeNode";
-import {XmlTreeTraverser} from "./Shared/Tree/XmlTreeTraverser";
-import {UTF_8_ENCODING, XML_NODE_TYPE} from "./Shared/Constants";
-import {ResultTreeNode} from "./Shared/Tree/ResultTreeNode";
-import {InstructionTreeBuilder} from "./InstructionTreeBuilder";
-import {ParserConfigError} from "./Shared/Error/ParserConfigError";
+import {ParserConfig} from "@src/ParserConfig";
+import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "@Shared/Types";
+import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
+import {XmlTreeTraverser} from "@Shared/Tree/XmlTreeTraverser";
+import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
+import {ResultTreeNode} from "@Shared/Tree/ResultTreeNode";
+import {InstructionTreeBuilder} from "@src/InstructionTreeBuilder";
+import {ParserConfigError} from "@Shared/Error/ParserConfigError";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;

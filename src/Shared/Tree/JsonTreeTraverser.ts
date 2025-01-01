@@ -3,8 +3,8 @@
  * MIT Licensed
  */
 
-import {ResultTreeNode} from "./ResultTreeNode";
-import {FlowControlError} from "../Error/FlowControlError";
+import {ResultTreeNode} from "@Shared/Tree/ResultTreeNode";
+import {FlowControlError} from "@Shared/Error/FlowControlError";
 
 export class JsonTreeTraverser {
     /**

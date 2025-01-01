@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {XmlTreeNode} from "./XmlTreeNode";
+import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
 
 export class XmlTreeTraverser {
     /**

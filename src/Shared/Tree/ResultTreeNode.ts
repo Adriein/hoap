@@ -3,7 +3,6 @@
  * MIT Licensed
  */
 
-
 import {JsonResultData, ResultTreeMetadata} from "../Types";
 
 export class ResultTreeNode {
