@@ -11,6 +11,7 @@ import {XmlTreeTraverser} from "./Shared/Tree/XmlTreeTraverser";
 import {UTF_8_ENCODING, XML_NODE_TYPE} from "./Shared/Constants";
 import {ResultTreeNode} from "./Shared/Tree/ResultTreeNode";
 import {InstructionTreeBuilder} from "./InstructionTreeBuilder";
+import {ParserConfigError} from "./Shared/Error/ParserConfigError";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
@@ -20,7 +21,7 @@ export class Parser {
         private config: ParserConfig
     ) {
         if (!config.configFile) {
-            throw new Error('No config file provided')
+            throw ParserConfigError.noConfigFile()
         }
 
         this.WATCHED_XML_TAG_TREE = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
@@ -28,14 +29,13 @@ export class Parser {
 
     public parse(): void {
         if (!this.config.path) {
-            throw new Error('No path provided');
+            throw ParserConfigError.noPathProvided();
         }
 
         const stream: ReadStream = fs.createReadStream(this.config.path);
 
         let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
-        const instructionTreeCopy: XmlTreeNode = this.WATCHED_XML_TAG_TREE;
         const resultTree: ResultTreeNode = ResultTreeNode.init();
 
         this.RESULT_TREE_HASH_MAP.set("root", [resultTree]);
@@ -47,7 +47,7 @@ export class Parser {
 
             let securityBytesBuffer: number = 0;
 
-            XmlTreeTraverser.dfs(instructionTreeCopy, (node: XmlTreeNode, path: string): void => {
+            XmlTreeTraverser.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode, path: string): void => {
                 const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
                 let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
@@ -56,14 +56,15 @@ export class Parser {
                 let openTagIndex: number = 0;
                 let closeTagIndex: number = 0;
 
+                // The parser try to find all occurrences of the current tag
                 while(openTagIndex !== -1) {
                     openTagIndex = observedChunk.indexOf(open);
                     closeTagIndex = observedChunk.indexOf(close);
 
+                    // Open and close tag found in the observable chunk
                     if (openTagIndex !== -1 && closeTagIndex !== -1) {
-                        /* The closing tag index is greater than opening tag
-                         * meaning that is a closing tag from another chunk
-                         */
+                        // The closing tag index is greater than opening tag
+                        // meaning that is a closing tag from another chunk
                         if(closeTagIndex < openTagIndex) {
                             this.closeOpenNode(path, closeTagIndex + globalIndexPosition);
 
@@ -74,7 +75,11 @@ export class Parser {
                                 chunkCombinedWithLeftover.byteLength
                             );
 
-                            subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
+                            subtractedChunkBytes = this.calculateSubtractedChunkBytes(
+                                subtractedChunkBytes,
+                                currentObservedChunkBytes,
+                                observedChunk.byteLength
+                            );
 
                             continue;
                         }
@@ -103,7 +108,11 @@ export class Parser {
                                 chunkCombinedWithLeftover.byteLength
                             );
 
-                            subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
+                            subtractedChunkBytes = this.calculateSubtractedChunkBytes(
+                                subtractedChunkBytes,
+                                currentObservedChunkBytes,
+                                observedChunk.byteLength
+                            );
 
                             continue;
                         }
@@ -125,11 +134,16 @@ export class Parser {
                             chunkCombinedWithLeftover.byteLength
                         );
 
-                        subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
+                        subtractedChunkBytes = this.calculateSubtractedChunkBytes(
+                            subtractedChunkBytes,
+                            currentObservedChunkBytes,
+                            observedChunk.byteLength
+                        );
 
                         continue;
                     }
 
+                    // Only open tag found in the observed chunk
                     if (openTagIndex !== -1) {
                         if(type !== XML_NODE_TYPE) {
                             securityBytesBuffer = chunk.byteLength - (openTagIndex + subtractedChunkBytes);
@@ -154,7 +168,11 @@ export class Parser {
                             chunkCombinedWithLeftover.byteLength
                         );
 
-                        subtractedChunkBytes = subtractedChunkBytes + (currentObservedChunkBytes - observedChunk.byteLength);
+                        subtractedChunkBytes = this.calculateSubtractedChunkBytes(
+                            subtractedChunkBytes,
+                            currentObservedChunkBytes,
+                            observedChunk.byteLength
+                        );
                     }
                 }
             });
@@ -276,5 +294,20 @@ export class Parser {
         const metadata: ResultTreeMetadata = {position: {open, close}};
 
         return new ResultTreeNode(data, metadata);
+    }
+
+    /**
+     * Calculate new value for subtracted chunk bytes counter
+     * @param alreadySubtractedBytes Sum of already subtracted bytes of the same chunk
+     * @param currentObservedChunkByteLength Byte length of the current observed chunk
+     * @param cutChunkByteLength Byte length of the new subarray that has been promoted to observed chunk
+     * @returns number
+     */
+    private calculateSubtractedChunkBytes(
+        alreadySubtractedBytes: number,
+        currentObservedChunkByteLength: number,
+        cutChunkByteLength: number
+    ): number {
+        return alreadySubtractedBytes + (currentObservedChunkByteLength - cutChunkByteLength);
     }
 }
