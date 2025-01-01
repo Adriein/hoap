@@ -10,8 +10,9 @@ import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
 import {XmlTreeTraverser} from "@Shared/Tree/XmlTreeTraverser";
 import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
 import {ResultTreeNode} from "@Shared/Tree/ResultTreeNode";
-import {InstructionTreeBuilder} from "@src/InstructionTreeBuilder";
+import {InstructionTreeBuilder} from "@Shared/Builder/InstructionTreeBuilder";
 import {ParserConfigError} from "@Shared/Error/ParserConfigError";
+import {ResultJsonBuilder} from "@Shared/Builder/ResultJsonBuilder";
 
 export class Parser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
@@ -186,7 +187,9 @@ export class Parser {
             });
 
             stream.on("end", (): void => {
-                console.log(resultTree);
+                const result = ResultJsonBuilder.build(resultTree);
+
+                console.log(result);
 
                 resolve({});
             });

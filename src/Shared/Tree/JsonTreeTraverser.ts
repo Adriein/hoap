@@ -11,19 +11,24 @@ export class JsonTreeTraverser {
      * Traverse with DFS algorithm a Tree from left to right
      * @param root Root node of the tree
      * @param fn Callback function to execute when visiting each node
+     * @param leaveFn Callback executed when we are leaving a node
      * @returns void
      */
-    public static dfs(root: ResultTreeNode, fn: (node: ResultTreeNode) => void): void {
+    public static dfs(
+        root: ResultTreeNode,
+        fn: (node: ResultTreeNode, cancel: () => void) => void,
+        leaveFn: () => void,
+    ): void {
         const queue: Array<[ResultTreeNode, number]> = [[root, 0]];
 
         while (queue.length > 0) {
             const [node, currentDepth] = queue.pop()!;
 
-            fn(node);
+            fn(node, this.cancel);
 
-            // Push children with incremented depth
             for (let i = node.children.length - 1; i >= 0; i--) {
                 if (!node.children[i]) {
+                    leaveFn();
                     continue;
                 }
 
@@ -72,4 +77,7 @@ export class JsonTreeTraverser {
         }
     }
 
+    private static cancel(): void {
+        throw new FlowControlError();
+    }
 }
