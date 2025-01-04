@@ -10,47 +10,75 @@ export class ResultJsonBuilder {
     public static build(root: ResultTreeNode): any {
         const json: Record<string, any> = {};
 
-        let visitedNodes: ResultTreeNode[] = [];
+        const visitedNodes: Record<string, any> = [];
+        let previousDepth: number = 0;
 
-        const onEnterNode = (node: ResultTreeNode): void => {
-            if (visitedNodes.length <= 0) {
-                Object.assign(json, { [node.data.tagName]: null });
+        const onEnterNode = (node: ResultTreeNode, depth: number): void => {
+            const numberOfPops = depth - previousDepth;
 
-                visitedNodes.push(node);
+            if (numberOfPops < 0) {
+                for (let i: number = 0; i < (numberOfPops * -1) + 1; i++) {
+                    visitedNodes.pop();
+                }
+            }
+            const newObj = { [node.data.tagName]: node.data.value };
+
+            if (visitedNodes.length < 1) {
+                Object.assign(json, newObj);
+
+                visitedNodes.push(json);
+
+                previousDepth = depth;
 
                 return;
             }
 
-            const parentNode: ResultTreeNode = visitedNodes[visitedNodes.length - 1]!;
+            const parentNode: Record<string, any> = visitedNodes[visitedNodes.length - 1]!;
 
-            const item: any = json[parentNode.data.tagName];
+            const parentNodeKey: string = Object.keys(parentNode)[0]!;
+
+            const item: any = parentNode[parentNodeKey];
 
             if (item) {
                 if (Array.isArray(item)) {
-                    json[parentNode.data.tagName] = [...item, { [node.data.tagName]: node.data.value }];
+                    Object.assign(parentNode, {[parentNodeKey]:[...item, newObj]});
 
-                    visitedNodes.push(node);
+                    visitedNodes.push(newObj);
+
+                    previousDepth = depth;
 
                     return;
                 }
 
-                json[parentNode.data.tagName] = { [node.data.tagName]: node.data.value };
+                const alreadyPresent = parentNode[node.data.tagName];
 
-                visitedNodes.push(node);
+                if (alreadyPresent) {
+                    Object.assign(parentNode, {...item, ...newObj})
+
+                    previousDepth = depth;
+
+                    return;
+                }
+
+                Object.assign(newObj, parentNode[parentNodeKey]);
+
+                parentNode[parentNodeKey] = newObj;
+
+                visitedNodes.push(newObj);
+
+                previousDepth = depth;
 
                 return;
             }
 
-            json[parentNode.data.tagName] = { [node.data.tagName]: node.data.value };
+            parentNode[parentNodeKey] = newObj;
 
-            visitedNodes.push(node);
+            visitedNodes.push(newObj);
+
+            previousDepth = depth;
         };
 
-        const onLeaveNode: () => void = (): void => {
-            visitedNodes.pop();
-        };
-
-        JsonTreeTraverser.dfs(root, onEnterNode, onLeaveNode);
+        JsonTreeTraverser.dfs(root, onEnterNode);
 
         return json;
     }
