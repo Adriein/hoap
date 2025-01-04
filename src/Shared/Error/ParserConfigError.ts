@@ -3,14 +3,14 @@
  * MIT Licensed
  */
 
-import {LibStandardError} from "./LibStandardError";
+import {LibStdError} from "./LibStdError";
 
-export class ParserConfigError extends LibStandardError {
+export class ParserConfigError extends LibStdError {
     public static noConfigFile(): ParserConfigError {
-        return new ParserConfigError("No config file provided", LibStandardError.ERROR_CODES.NO_CONFIG_FILE_ERROR_CODE);
+        return new ParserConfigError("No config file provided", LibStdError.ERROR_CODES.NO_CONFIG_FILE_ERROR_CODE);
     }
 
     public static noPathProvided(): ParserConfigError {
-        return new ParserConfigError("No path provided", LibStandardError.ERROR_CODES.NO_PATH_PROVIDED);
+        return new ParserConfigError("No path provided", LibStdError.ERROR_CODES.NO_PATH_PROVIDED);
     }
 }

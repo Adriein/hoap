@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-export class LibStandardError extends Error {
+export class LibStdError extends Error {
     protected static ERROR_CODES = {
         NO_CONFIG_FILE_ERROR_CODE: 1,
         NO_PATH_PROVIDED: 2,
