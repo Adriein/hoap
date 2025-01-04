@@ -9,6 +9,7 @@ import {Parser} from "@src/Parser";
 import {ParserConfig} from "@src/ParserConfig";
 import {WatchedXmlTagsJson} from "@Shared/Types";
 import {UTF_8_ENCODING} from "@Shared/Constants";
+import {ParserV2} from "@src/Parserv2";
 
 /*const hoap: HoapParser = new HoapParser();
 
@@ -33,6 +34,8 @@ const config: ParserConfig = ParserConfig
     .withFilePath(AMADEUS_TEST_XML)
     .withConfigFile(watchedXmlTagsJson)
 
-const hoap: Parser = new Parser(config);
+// const hoap: Parser = new Parser(config);
+
+const hoap: ParserV2 = new ParserV2(config);
 
 hoap.parse().then(response => console.log(response));

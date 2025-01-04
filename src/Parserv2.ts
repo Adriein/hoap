@@ -102,7 +102,7 @@ export class ParserV2 {
                                     closeTagIndex
                                 );
 
-                                const result: ResultTreeNode = this.createResultNode(
+                                const result: Result = this.createResultNode(
                                     original,
                                     openTagIndex + globalIndexPosition + subtractedChunkBytes,
                                     closeTagIndex + globalIndexPosition + subtractedChunkBytes,
@@ -129,7 +129,7 @@ export class ParserV2 {
                                 continue;
                             }
 
-                            const result: ResultTreeNode = this.createResultNode(
+                            const result: Result = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
                                 closeTagIndex + globalIndexPosition + subtractedChunkBytes
@@ -166,7 +166,7 @@ export class ParserV2 {
                             const result: Result = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                closeTagIndex + globalIndexPosition + subtractedChunkBytes
+                                closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes
                             );
 
                             this.registerNewNode(path, result);
@@ -197,7 +197,7 @@ export class ParserV2 {
             });
 
             stream.on("end", (): void => {
-                const result = ResultJsonBuilder.build(resultTree);
+                // const result = ResultJsonBuilder.build(resultTree);
 
                 console.log(result);
 
@@ -227,11 +227,11 @@ export class ParserV2 {
             throw new Error('Invalid or empty array');
         }
 
-        if (node.metadata.position.close === -1) {
+        if (node.$position.close === -1) {
             for (let i: number = 0; i < parents.length; i++) {
                 const parent: Result = parents[i]!;
 
-                if (parent.metadata.position.close === -1) {
+                if (parent.$position.close === -1) {
                     if (parent[parent.$name]) {
                         if (Object.hasOwn(parent[parent.$name], node.$name)) {
                             delete node[node.$name];
@@ -240,6 +240,10 @@ export class ParserV2 {
 
                             break;
                         }
+
+                        parent[parent.$name][node.$name] = node;
+
+                        break;
                     }
 
                     parent[parent.$name] = node;
@@ -254,7 +258,7 @@ export class ParserV2 {
         for (let i: number = 0; i < parents.length; i++) {
             const parent: Result = parents[i]!;
 
-            if (parent.metadata.position.close === -1) {
+            if (parent.$position.close === -1) {
                 if (parent[parent.$name]) {
                     if (Object.hasOwn(parent[parent.$name], node.$name)) {
                         delete node[node.$name];
@@ -270,7 +274,7 @@ export class ParserV2 {
                 break;
             }
 
-            if (isInRange(parent, node.metadata.position.open, node.metadata.position.close)) {
+            if (isInRange(parent, node.$position.open, node.$position.close)) {
                 if (parent[parent.$name]) {
                     if (Object.hasOwn(parent[parent.$name], node.$name)) {
                         delete node[node.$name];
@@ -295,15 +299,15 @@ export class ParserV2 {
      * @returns void
      */
     private closeOpenNode(path: string, closeIndexPosition: number): void {
-        const nodes: ResultTreeNode[] = this.RESULT_TREE_HASH_MAP.get(path)!;
+        const nodes: Result[] = this.RESULT_TREE_HASH_MAP.get(path)!;
 
         // The first item found with closing tag -1 is the correct one since the parser is going top down and the
         // items are being inserted in the hash map in order as the parser founds them
         for (let i: number = 0; i < nodes.length; i++) {
-            const node: ResultTreeNode = nodes[i]!;
+            const node: Result = nodes[i]!;
 
-            if (node.metadata.position.close === -1) {
-                node.metadata.position.close = closeIndexPosition;
+            if (node.$position.close === -1) {
+                node.$position.close = closeIndexPosition;
 
                 break;
             }
