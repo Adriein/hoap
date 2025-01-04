@@ -22,3 +22,15 @@ export type ResultTreeMetadata = {
 export type WatchedXmlTagNode = { name: string, type: string, children?: WatchedXmlTagNode[] }
 
 export type WatchedXmlTagsJson = { version: string, nodes: WatchedXmlTagNode[] }
+
+export type Result = {
+    [prop: string]: any;
+    $name: string;
+    $value: any;
+    $position: {
+        open: number;
+        close: number;
+    };
+};
+
+export type InRangeFn =  (node: Result, openTagIndex: number, closeTagIndex: number) => boolean;
