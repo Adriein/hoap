@@ -40,7 +40,6 @@ export class ParserV2 {
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
             const result: Result = {
-                root: null,
                 $name: "root",
                 $value: null,
                 $position: {
@@ -232,23 +231,9 @@ export class ParserV2 {
                 const parent: Result = parents[i]!;
 
                 if (parent.$position.close === -1) {
-                    if (parent[parent.$name]) {
-                        if (Object.hasOwn(parent[parent.$name], node.$name)) {
-                            delete node[node.$name];
+                   this.addLeafToPojo(parent, node);
 
-                            parent[parent.$name][node.$name] = [parent[parent.$name][node.$name], node];
-
-                            break;
-                        }
-
-                        parent[parent.$name][node.$name] = node;
-
-                        break;
-                    }
-
-                    parent[parent.$name] = node;
-
-                    break;
+                   break;
                 }
             }
 
@@ -259,33 +244,13 @@ export class ParserV2 {
             const parent: Result = parents[i]!;
 
             if (parent.$position.close === -1) {
-                if (parent[parent.$name]) {
-                    if (Object.hasOwn(parent[parent.$name], node.$name)) {
-                        delete node[node.$name];
-
-                        parent[parent.$name][node.$name] = [parent[parent.$name][node.$name], node];
-
-                        break;
-                    }
-                }
-
-                parent[parent.$name] = node;
+                this.addLeafToPojo(parent, node);
 
                 break;
             }
 
             if (isInRange(parent, node.$position.open, node.$position.close)) {
-                if (parent[parent.$name]) {
-                    if (Object.hasOwn(parent[parent.$name], node.$name)) {
-                        delete node[node.$name];
-
-                        parent[parent.$name][node.$name] = [parent[parent.$name][node.$name], node];
-
-                        break;
-                    }
-                }
-
-                parent[parent.$name] = node;
+                this.addLeafToPojo(parent, node);
 
                 break;
             }
@@ -347,7 +312,6 @@ export class ParserV2 {
         value: string | number | null = null
     ): Result {
         return {
-            [tagName]: value,
             $name: tagName,
             $value: value,
             $position: {open, close}
@@ -367,5 +331,27 @@ export class ParserV2 {
         cutChunkByteLength: number
     ): number {
         return alreadySubtractedBytes + (currentObservedChunkByteLength - cutChunkByteLength);
+    }
+
+    /**
+     * Add a new prop to a plain javascript object respecting array or obj
+     * @param parent Result the parent node
+     * @param node Result the current node
+     * @returns void
+     */
+    private addLeafToPojo(parent: Result, node: Result): void {
+        if (Object.hasOwn(parent, node.$name)) {
+            if (Array.isArray(parent[node.$name])) {
+                parent[node.$name].push(node);
+
+                return;
+            }
+
+            parent[node.$name] = [parent[node.$name], node];
+
+            return;
+        }
+
+        parent[node.$name] = node;
     }
 }

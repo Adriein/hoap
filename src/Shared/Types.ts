@@ -24,7 +24,7 @@ export type WatchedXmlTagNode = { name: string, type: string, children?: Watched
 export type WatchedXmlTagsJson = { version: string, nodes: WatchedXmlTagNode[] }
 
 export type Result = {
-    [prop: string]: any;
+    [prop: string]: any,
     $name: string;
     $value: any;
     $position: {
