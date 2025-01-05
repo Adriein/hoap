@@ -12,6 +12,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     /* If transpiling with TypeScript: */
+    "baseUrl": ".",
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "outDir": "dist",
@@ -20,7 +21,7 @@
     "lib": ["es2022"],
     "paths": {
       "@src/*": ["src/*"],
-      "@Shared/*": ["src/Shared/*"],
+      "@Shared/*": ["src/Shared/*"]
     }
   }
 }

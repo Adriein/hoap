@@ -36,4 +36,4 @@ const config: ParserConfig = ParserConfig
 
 const hoap: HoapParser = new HoapParser(config);
 
-hoap.parse().then(response => console.log(JSON.stringify(response)));
+hoap.parse().then(response => console.log("Finish"));
