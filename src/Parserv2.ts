@@ -5,12 +5,11 @@
 
 import fs, {ReadStream} from "node:fs";
 import {ParserConfig} from "@src/ParserConfig";
-import {RawBinaryXmlTagPair, Result} from "@Shared/Types";
-import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
-import {XmlTreeTraverser} from "@Shared/Tree/XmlTreeTraverser";
+import {InstructionTreeBuilder} from "@Shared/Builder";
 import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
-import {InstructionTreeBuilder} from "@Shared/Builder/InstructionTreeBuilder";
-import {ParserConfigError} from "@Shared/Error/ParserConfigError";
+import {ParserConfigError} from "@Shared/Error";
+import {XmlTreeNode, XmlTreeTraverser} from "@Shared/Tree";
+import {RawBinaryXmlTagPair, Result} from "@Shared/Types";
 import {isInRange} from "@Shared/Utils";
 
 export class ParserV2 {
