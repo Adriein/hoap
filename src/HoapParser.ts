@@ -211,12 +211,15 @@ export class HoapParser {
     private append(path: string, node: Result): void {
         const parentLvlKey: string = path.substring(0, path.lastIndexOf("/"));
 
+        //The hash map allows to avoid the traverse of the hole result tree
         const parents: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
 
         if (!parents) {
             throw new Error('Invalid or empty array');
         }
 
+        //The node closing tag has not been found in the current chunk
+        //so checking for inRange nodes will lead to false positives
         if (node.$position.close === -1) {
             for (let i: number = 0; i < parents.length; i++) {
                 const parent: Result = parents[i]!;
