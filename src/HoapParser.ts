@@ -12,7 +12,7 @@ import {XmlTreeNode, XmlTreeTraverser} from "@Shared/Tree";
 import {RawBinaryXmlTagPair, Result} from "@Shared/Types";
 import {isInRange} from "@Shared/Utils";
 
-export class ParserV2 {
+export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
     private readonly RESULT_TREE_HASH_MAP: Map<string, Result[]> = new Map<string, Result[]>();
 
@@ -192,13 +192,7 @@ export class ParserV2 {
                 globalIndexPosition = globalIndexPosition + chunk.byteLength;
             });
 
-            stream.on("end", (): void => {
-                // const result = ResultJsonBuilder.build(resultTree);
-
-                console.log(result);
-
-                resolve({});
-            });
+            stream.on("end", (): void => resolve(result));
 
             stream.on("error", (error: Error): void => {
                 console.log(error);

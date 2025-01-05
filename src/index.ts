@@ -3,13 +3,11 @@
  * MIT Licensed
  */
 
-import ParserV0 from "./ParserV0";
 import fs from "fs";
-import {ParserV1} from "@src/ParserV1";
 import {ParserConfig} from "@src/ParserConfig";
 import {WatchedXmlTagsJson} from "@Shared/Types";
 import {UTF_8_ENCODING} from "@Shared/Constants";
-import {ParserV2} from "@src/Parserv2";
+import {HoapParser} from "@src/HoapParser";
 
 /*const hoap: ParserV0 = new ParserV0();
 
@@ -36,6 +34,6 @@ const config: ParserConfig = ParserConfig
 
 // const hoap: ParserV1 = new ParserV1(config);
 
-const hoap: ParserV2 = new ParserV2(config);
+const hoap: HoapParser = new HoapParser(config);
 
-hoap.parse().then(response => console.log(response));
+hoap.parse().then(response => console.log(JSON.stringify(response)));
