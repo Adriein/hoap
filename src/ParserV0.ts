@@ -10,7 +10,7 @@ enum PARSING {
     VALUE = 1
 }
 
-export default class HoapParser {
+export default class ParserV0 {
 
     private readonly INIT_NEEDLE: string = '<?xml version="1.0" encoding="UTF-8"?>';
     //private readonly MAX_NEEDLE: string = '</soap:Envelope>';

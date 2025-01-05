@@ -14,7 +14,7 @@ import {InstructionTreeBuilder} from "@Shared/Builder/InstructionTreeBuilder";
 import {ParserConfigError} from "@Shared/Error/ParserConfigError";
 import {ResultJsonBuilder} from "@Shared/Builder/ResultJsonBuilder";
 
-export class Parser {
+export class ParserV1 {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
     private readonly RESULT_TREE_HASH_MAP: Map<string, ResultTreeNode[]> = new Map<string, ResultTreeNode[]>();
 

@@ -3,15 +3,15 @@
  * MIT Licensed
  */
 
-import HoapParser from "./HoapParser";
+import ParserV0 from "./ParserV0";
 import fs from "fs";
-import {Parser} from "@src/Parser";
+import {ParserV1} from "@src/ParserV1";
 import {ParserConfig} from "@src/ParserConfig";
 import {WatchedXmlTagsJson} from "@Shared/Types";
 import {UTF_8_ENCODING} from "@Shared/Constants";
 import {ParserV2} from "@src/Parserv2";
 
-/*const hoap: HoapParser = new HoapParser();
+/*const hoap: ParserV0 = new ParserV0();
 
 const rawData: string = fs.readFileSync(
     `${process.cwd()}/test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`,
@@ -34,7 +34,7 @@ const config: ParserConfig = ParserConfig
     .withFilePath(AMADEUS_TEST_XML)
     .withConfigFile(watchedXmlTagsJson)
 
-// const hoap: Parser = new Parser(config);
+// const hoap: ParserV1 = new ParserV1(config);
 
 const hoap: ParserV2 = new ParserV2(config);
 
