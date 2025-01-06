@@ -8,6 +8,7 @@ import {ParserConfig} from "@src/ParserConfig";
 import {WatchedXmlTagsJson} from "@Shared/Types";
 import {UTF_8_ENCODING} from "@Shared/Constants";
 import {HoapParser} from "@src/HoapParser";
+import {ReadStream} from "node:fs";
 
 const AMADEUS_TEST_XML = `${process.cwd()}/test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`;
 const PARSER_WATCHED_XML_TAGS_CONFIG_FILE = `${process.cwd()}/src/hoap.config.json`;
@@ -23,4 +24,6 @@ const config: ParserConfig = ParserConfig
 
 const hoap: HoapParser = new HoapParser(config);
 
-hoap.parse().then(response => console.log("Finish"));
+const stream: ReadStream = fs.createReadStream(config.path!);
+
+hoap.parse(stream).then(json => console.log("Finish"));

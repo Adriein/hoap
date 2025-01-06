@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import fs, {ReadStream} from "node:fs";
+import {Readable} from "node:stream";
 import {ParserConfig} from "@src/ParserConfig";
 import {InstructionTreeBuilder} from "@Shared/Builder";
 import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
@@ -26,13 +26,11 @@ export class HoapParser {
         this.WATCHED_XML_TAG_TREE = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
     }
 
-    public parse(): Promise<void> {
-        return new Promise((resolve: (json: any) => void, reject: (error: Error) => void) => {
+    public parse(stream: Readable): Promise<Result> {
+        return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void) => {
             if (!this.config.path) {
                 throw ParserConfigError.noPathProvided();
             }
-
-            const stream: ReadStream = fs.createReadStream(this.config.path);
 
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
