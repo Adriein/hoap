@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@Shared/Types";
+import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@parser/Shared/Types";
 
 export class XmlTreeNode {
     public constructor(

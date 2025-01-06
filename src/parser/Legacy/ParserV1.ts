@@ -4,15 +4,15 @@
  */
 
 import fs, {ReadStream} from "node:fs";
-import {ParserConfig} from "@src/ParserConfig";
-import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "@Shared/Types";
-import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
-import {XmlTreeTraverser} from "@Shared/Tree/XmlTreeTraverser";
-import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
-import {ResultTreeNode} from "@Shared/Tree/ResultTreeNode";
-import {InstructionTreeBuilder} from "@Shared/Builder/InstructionTreeBuilder";
-import {ParserConfigError} from "@Shared/Error/ParserConfigError";
-import {ResultJsonBuilder} from "@Shared/Builder/ResultJsonBuilder";
+import {ParserConfig} from "@parser/ParserConfig";
+import {JsonResultData, RawBinaryXmlTagPair, ResultTreeMetadata} from "@parser/Shared/Types";
+import {XmlTreeNode} from "@parser/Shared/Tree/XmlTreeNode";
+import {XmlTreeTraverser} from "@parser/Shared/Tree/XmlTreeTraverser";
+import {UTF_8_ENCODING, XML_NODE_TYPE} from "@parser/Shared/Constants";
+import {ResultTreeNode} from "@parser/Shared/Tree/ResultTreeNode";
+import {InstructionTreeBuilder} from "@parser/Shared/Builder/InstructionTreeBuilder";
+import {ParserConfigError} from "@parser/Shared/Error/ParserConfigError";
+import {ResultJsonBuilder} from "@parser/Shared/Builder/ResultJsonBuilder";
 
 export class ParserV1 {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;

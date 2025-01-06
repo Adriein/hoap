@@ -3,12 +3,11 @@
  * MIT Licensed
  */
 
-import fs from "fs";
-import {ParserConfig} from "@src/ParserConfig";
-import {WatchedXmlTagsJson} from "@Shared/Types";
-import {UTF_8_ENCODING} from "@Shared/Constants";
-import {HoapParser} from "@src/HoapParser";
-import {ReadStream} from "node:fs";
+import {ParserConfig} from "@parser/ParserConfig";
+import {WatchedXmlTagsJson} from "@parser/Shared/Types";
+import {UTF_8_ENCODING} from "@parser/Shared/Constants";
+import {HoapParser} from "@parser/HoapParser";
+import fs, {ReadStream} from "node:fs";
 
 const AMADEUS_TEST_XML = `${process.cwd()}/test/xml/Fare_MasterPricerTravelBoardSearchResponse.xml`;
 const PARSER_WATCHED_XML_TAGS_CONFIG_FILE = `${process.cwd()}/src/hoap.config.json`;

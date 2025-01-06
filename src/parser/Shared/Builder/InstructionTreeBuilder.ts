@@ -1,6 +1,6 @@
-import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@Shared/Types";
-import {UTF_8_ENCODING} from "@Shared/Constants";
-import {XmlTreeNode} from "@Shared/Tree/XmlTreeNode";
+import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@parser/Shared/Types";
+import {UTF_8_ENCODING} from "@parser/Shared/Constants";
+import {XmlTreeNode} from "@parser/Shared/Tree/XmlTreeNode";
 
 export class InstructionTreeBuilder {
     public static HASH_MAP_KEYS: string[] = ["root"];

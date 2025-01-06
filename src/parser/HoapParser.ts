@@ -4,13 +4,13 @@
  */
 
 import {Readable} from "node:stream";
-import {ParserConfig} from "@src/ParserConfig";
-import {InstructionTreeBuilder} from "@Shared/Builder";
-import {UTF_8_ENCODING, XML_NODE_TYPE} from "@Shared/Constants";
-import {ParserConfigError} from "@Shared/Error";
-import {XmlTreeNode, XmlTreeTraverser} from "@Shared/Tree";
-import {RawBinaryXmlTagPair, Result} from "@Shared/Types";
-import {isInRange} from "@Shared/Utils";
+import {ParserConfig} from "@parser/ParserConfig";
+import {InstructionTreeBuilder} from "@parser/Shared/Builder";
+import {UTF_8_ENCODING, XML_NODE_TYPE} from "@parser/Shared/Constants";
+import {ParserConfigError} from "@parser/Shared/Error";
+import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
+import {RawBinaryXmlTagPair, Result} from "@parser/Shared/Types";
+import {isInRange} from "@parser/Shared/Utils";
 
 export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;

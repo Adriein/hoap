@@ -3,8 +3,8 @@
  * MIT Licensed
  */
 
-import {ResultTreeNode} from "@Shared/Tree/ResultTreeNode";
-import {JsonTreeTraverser} from "@Shared/Tree/JsonTreeTraverser";
+import {ResultTreeNode} from "@parser/Shared/Tree/ResultTreeNode";
+import {JsonTreeTraverser} from "@parser/Shared/Tree/JsonTreeTraverser";
 
 export class ResultJsonBuilder {
     public static build(root: ResultTreeNode): any {

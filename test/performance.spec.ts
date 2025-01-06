@@ -1,4 +1,4 @@
-import ParserV0 from "@src/Legacy/ParserV0";
+import ParserV0 from "@parser/Legacy/ParserV0";
 import fs from "fs";
 import FastXMLParser from "../src/FastXMLParser";
 
