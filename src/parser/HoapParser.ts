@@ -193,8 +193,6 @@ export class HoapParser {
             stream.on("end", (): void => resolve(result));
 
             stream.on("error", (error: Error): void => {
-                console.log(error);
-
                 reject(error);
             });
         });

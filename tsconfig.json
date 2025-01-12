@@ -22,6 +22,7 @@
     "paths": {
       "@src/*": ["src/*"],
       "@parser/*": ["src/parser/*"],
+      "@soap/*": ["src/soap/*"],
     }
   }
 }
