@@ -6,11 +6,12 @@
 import {Readable} from "node:stream";
 import {ParserConfig} from "@parser/ParserConfig";
 import {InstructionTreeBuilder} from "@parser/Shared/Builder";
-import {UTF_8_ENCODING, XML_NODE_TYPE} from "@parser/Shared/Constants";
+import {UTF_8_ENCODING, XML_NODE_TYPE} from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
-import {RawBinaryXmlTagPair, Result} from "@parser/Shared/Types";
+import {RawBinaryXmlTagPair, Result} from "@shared/Types";
 import {isInRange} from "@parser/Shared/Utils";
+import {NodeParentNotFoundError} from "@parser/Shared/Error/NodeParentNotFoundError";
 
 export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
@@ -211,7 +212,7 @@ export class HoapParser {
         const parents: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
 
         if (!parents) {
-            throw new Error('Invalid or empty array');
+            throw new NodeParentNotFoundError(parentLvlKey);
         }
 
         //The node closing tag has not been found in the current chunk

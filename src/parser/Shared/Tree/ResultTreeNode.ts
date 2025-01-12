@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {JsonResultData, ResultTreeMetadata} from "../Types";
+import {JsonResultData, ResultTreeMetadata} from "@shared/Types";
 
 export class ResultTreeNode {
     public static init(): ResultTreeNode {

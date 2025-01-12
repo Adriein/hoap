@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {LibStdError} from "./LibStdError";
+import {LibStdError} from "@shared/Error";
 
 export class ParserConfigError extends LibStdError {
     public static noConfigFile(): ParserConfigError {

@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "nodes": [
+    {
+      "name": "m:NumberToDollarsResponse",
+      "type": "xml-node",
+      "children": [
+        {
+          "name": "m:NumberToDollarsResult",
+          "type": "xml-data:string"
+        }
+      ]
+    }
+  ]
+}

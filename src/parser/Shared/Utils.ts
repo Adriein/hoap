@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {InRangeFn, Result} from "@parser/Shared/Types";
+import {InRangeFn, Result} from "@shared/Types";
 
 export const isInRange: InRangeFn = (
     node: Result,

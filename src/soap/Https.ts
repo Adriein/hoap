@@ -5,14 +5,14 @@
 
 import { request } from 'node:https';
 import { ClientRequest, IncomingMessage} from "node:http";
-import {SoapRequest, SoapRequestAbortFn} from "@soap/Shared/Types";
 import {HoapParser} from "@parser/HoapParser";
-import {Result} from "@parser/Shared/Types";
+import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
 
 export class Https {
     public do(host: string, parser: HoapParser): SoapRequest {
         const options = {
-            hostname: host,
+            hostname: "www.dataaccess.com",
+            path: "/webservicesserver/NumberConversion.wso",
             method: 'POST',
             headers: { 'Content-Type': 'text/xml; charset=utf-8' }
         };
@@ -40,7 +40,7 @@ export class Https {
 
         return { promise, abort };
     }
-    private buildRequest(): Buffer<ArrayBuffer> {
-        throw new Error("Not implemented");
+    private buildRequest(): string {
+        return '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><NumberToDollars xmlns="http://www.dataaccess.com/webservicesserver/"><dNum>500</dNum></NumberToDollars></soap:Body></soap:Envelope>'
     }
 }

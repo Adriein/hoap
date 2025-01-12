@@ -23,6 +23,7 @@
       "@src/*": ["src/*"],
       "@parser/*": ["src/parser/*"],
       "@soap/*": ["src/soap/*"],
+      "@shared/*": ["src/shared/*"],
     }
   }
 }

@@ -1,5 +1,5 @@
-import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@parser/Shared/Types";
-import {UTF_8_ENCODING} from "@parser/Shared/Constants";
+import {RawBinaryXmlTagPair, WatchedXmlTagNode, WatchedXmlTagsJson} from "@shared/Types";
+import {UTF_8_ENCODING} from "@shared/Constants";
 import {XmlTreeNode} from "@parser/Shared/Tree/XmlTreeNode";
 
 export class InstructionTreeBuilder {

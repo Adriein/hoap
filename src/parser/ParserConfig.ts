@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {WatchedXmlTagsJson} from "@parser/Shared/Types";
+import {WatchedXmlTagsJson} from "@shared/Types";
 
 export class ParserConfig {
     private constructor(
