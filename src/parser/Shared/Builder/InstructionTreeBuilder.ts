@@ -40,7 +40,7 @@ export class InstructionTreeBuilder {
      * @returns A RawBinaryXmlTagPair containing the binary representations of the tags
      */
     private static createXmlTagPair(tagName: string, type: string): RawBinaryXmlTagPair {
-        const xmlOpenTag = `<${tagName}`;
+        const xmlOpenTag = `<${tagName}>`;
         const xmlClosingTag = `</${tagName}>`;
 
         return {

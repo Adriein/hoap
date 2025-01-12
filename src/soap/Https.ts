@@ -7,6 +7,7 @@ import { request } from 'node:https';
 import { ClientRequest, IncomingMessage} from "node:http";
 import {HoapParser} from "@parser/HoapParser";
 import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
+import {Socket} from "node:net";
 
 export class Https {
     public do(host: string, parser: HoapParser): SoapRequest {
@@ -23,8 +24,14 @@ export class Https {
             client = request(options, (readable: IncomingMessage): void => {
                 parser.parse(readable)
                     .then((data: Result): void => resolve(data))
-                    .catch((error: Error): void => reject(error));
+                    .catch((error: Error): void => {
+                        client!.destroy();
+
+                        reject(error);
+                    });
             });
+
+            //client.on('socket', (socket:Socket) => console.log(socket))
 
             client.write(this.buildRequest());
             client.end();
