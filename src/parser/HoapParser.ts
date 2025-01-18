@@ -65,7 +65,6 @@ export class HoapParser {
                     let closeTagIndex: number = 0;
 
                     let attribute: Buffer<ArrayBuffer> = Buffer.alloc(0);
-                    let attributesPointer: number = openTagIndex + open.byteLength + 1;
 
                     // The parser try to find all occurrences of the current tag
                     while(openTagIndex !== -1) {
@@ -130,6 +129,8 @@ export class HoapParser {
 
                             //Check if open tag has attributes on it
                             if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                                let attributesPointer: number = openTagIndex + open.byteLength + 1;
+
                                 while(true) {
                                     if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
                                         break;
@@ -143,8 +144,6 @@ export class HoapParser {
 
                                     attributesPointer++;
                                 }
-
-                                subtractedChunkBytes+= attributesPointer;
                             }
 
                             const result: Result = this.createResultNode(
@@ -185,6 +184,8 @@ export class HoapParser {
 
                             //Check if open tag has attributes on it
                             if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                                let attributesPointer: number = openTagIndex + open.byteLength + 1;
+
                                 while(true) {
                                     if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
                                         break;
@@ -198,8 +199,6 @@ export class HoapParser {
 
                                     attributesPointer++;
                                 }
-
-                                subtractedChunkBytes+= attributesPointer;
                             }
 
                             const result: Result = this.createResultNode(
