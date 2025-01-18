@@ -14,3 +14,7 @@ export enum ParsingNodeStatus {
     CLOSED = "CLOSED",
     INFORMATION_NOT_EXTRACTED = "INFORMATION_NOT_EXTRACTED"
 }
+
+export const XML = {
+    GT_TAG: Buffer.from(">", UTF_8_ENCODING),
+}

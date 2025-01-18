@@ -6,7 +6,7 @@
 import {Readable} from "node:stream";
 import {ParserConfig} from "@parser/ParserConfig";
 import {InstructionTreeBuilder} from "@parser/Shared/Builder";
-import {UTF_8_ENCODING, XML_NODE_TYPE} from "@shared/Constants";
+import {UTF_8_ENCODING, XML, XML_NODE_TYPE} from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
 import {RawBinaryXmlTagPair, Result} from "@shared/Types";
@@ -38,6 +38,7 @@ export class HoapParser {
             const result: Result = {
                 $name: "root",
                 $value: null,
+                $attribute: null,
                 $position: {
                     open: 0,
                     close: -1
@@ -62,6 +63,9 @@ export class HoapParser {
 
                     let openTagIndex: number = 0;
                     let closeTagIndex: number = 0;
+
+                    let attribute: Buffer<ArrayBuffer> = Buffer.alloc(0);
+                    let attributesPointer: number = openTagIndex + open.byteLength + 1;
 
                     // The parser try to find all occurrences of the current tag
                     while(openTagIndex !== -1) {
@@ -124,10 +128,31 @@ export class HoapParser {
                                 continue;
                             }
 
+                            //Check if open tag has attributes on it
+                            if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                                while(true) {
+                                    if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
+                                        break;
+                                    }
+
+                                    const value: Buffer<ArrayBuffer> = Buffer.from([
+                                        observedChunk.at(attributesPointer)!
+                                    ]);
+
+                                    attribute = Buffer.concat([attribute, value])
+
+                                    attributesPointer++;
+                                }
+
+                                subtractedChunkBytes+= attributesPointer;
+                            }
+
                             const result: Result = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                closeTagIndex + globalIndexPosition + subtractedChunkBytes
+                                closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                null,
+                                attribute.length? attribute.toString(UTF_8_ENCODING) : null,
                             )
 
                             this.registerNewNode(path, result);
@@ -158,10 +183,31 @@ export class HoapParser {
                                 continue;
                             }
 
+                            //Check if open tag has attributes on it
+                            if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                                while(true) {
+                                    if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
+                                        break;
+                                    }
+
+                                    const value: Buffer<ArrayBuffer> = Buffer.from([
+                                        observedChunk.at(attributesPointer)!
+                                    ]);
+
+                                    attribute = Buffer.concat([attribute, value])
+
+                                    attributesPointer++;
+                                }
+
+                                subtractedChunkBytes+= attributesPointer;
+                            }
+
                             const result: Result = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes
+                                closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                null,
+                                attribute.length? attribute.toString(UTF_8_ENCODING) : null,
                             );
 
                             this.registerNewNode(path, result);
@@ -300,12 +346,14 @@ export class HoapParser {
         tagName: string,
         open: number,
         close: number,
-        value: string | number | null = null
+        value: string | number | null = null,
+        attribute: string | null = null,
     ): Result {
         return {
             $name: tagName,
             $value: value,
-            $position: {open, close}
+            $attribute: attribute,
+            $position: {open, close},
         };
     }
 

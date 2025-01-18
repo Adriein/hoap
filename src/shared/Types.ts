@@ -27,6 +27,7 @@ export type Result = {
     [prop: string]: any,
     $name: string;
     $value: any;
+    $attribute: any;
     $position: {
         open: number;
         close: number;
