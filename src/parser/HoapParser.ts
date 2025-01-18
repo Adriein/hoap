@@ -96,7 +96,7 @@ export class HoapParser {
 
                             if(type !== XML_NODE_TYPE) {
                                 const rawBinaryValue: Buffer<ArrayBuffer> = observedChunk.subarray(
-                                    openTagIndex + open.byteLength,
+                                    openTagIndex + open.byteLength + 1,
                                     closeTagIndex
                                 );
 
