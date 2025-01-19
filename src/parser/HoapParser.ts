@@ -128,7 +128,7 @@ export class HoapParser {
                             }
 
                             //Check if open tag has attributes on it
-                            if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                            if (observedChunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
                                 let attributesPointer: number = openTagIndex + open.byteLength + 1;
 
                                 while(true) {
@@ -179,11 +179,11 @@ export class HoapParser {
                             if(type !== XML_NODE_TYPE) {
                                 securityBytesBuffer = chunk.byteLength - (openTagIndex + subtractedChunkBytes);
 
-                                continue;
+                                break;
                             }
 
                             //Check if open tag has attributes on it
-                            if (observedChunk.at(openTagIndex + open.byteLength + 1) != XML.GT_TAG.at(0)) {
+                            if (observedChunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
                                 let attributesPointer: number = openTagIndex + open.byteLength + 1;
 
                                 while(true) {
