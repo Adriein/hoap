@@ -17,9 +17,7 @@ export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
     private readonly RESULT_TREE_HASH_MAP: Map<string, Result[]> = new Map<string, Result[]>();
 
-    public constructor(
-        private config: ParserConfig
-    ) {
+    public constructor(config: ParserConfig) {
         if (!config.configFile) {
             throw ParserConfigError.noConfigFile()
         }
@@ -29,10 +27,6 @@ export class HoapParser {
 
     public parse(stream: Readable): Promise<Result> {
         return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void): void => {
-            if (!this.config.path) {
-                throw ParserConfigError.noPathProvided();
-            }
-
             const result: Result = {
                 $name: "root",
                 $value: null,
@@ -342,7 +336,7 @@ export class HoapParser {
             return Buffer.alloc(0);
         }
 
-        // Initialize a list to store attribute bytes
+        // For smaller amount of bytes it is more efficient than Buffer.alloc
         const attributeBytes: number[] = [];
 
         // Iterate through the chunk starting from the attributes position

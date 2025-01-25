@@ -9,10 +9,16 @@ import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
 
 export class Https {
-    public do(host: string, parser: HoapParser): SoapRequest {
+    public constructor(
+        private parser: HoapParser,
+    ) {}
+
+    public do(url: string): SoapRequest {
+        const [host, ...path] = url.split("/");
+
         const options = {
-            hostname: "www.dataaccess.com",
-            path: "/webservicesserver/NumberConversion.wso",
+            hostname: host,
+            path: `/${path.join("/")}`,
             method: 'POST',
             headers: { 'Content-Type': 'text/xml; charset=utf-8' }
         };
@@ -21,7 +27,7 @@ export class Https {
 
         const promise = new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
             client = request(options, (readable: IncomingMessage): void => {
-                parser.parse(readable)
+                this.parser.parse(readable)
                     .then((data: Result): void => resolve(data))
                     .catch((error: Error): void => {
                         client!.destroy();
@@ -30,7 +36,13 @@ export class Https {
                     });
             });
 
-            //client.on('socket', (socket:Socket) => console.log(socket))
+            client.on('error', (error: Error) => {
+                reject(error);
+            });
+
+            client.on('close', (a: any) => {
+                console.log(a)
+            });
 
             client.write(this.buildRequest());
             client.end();
