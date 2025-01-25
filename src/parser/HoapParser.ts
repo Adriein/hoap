@@ -66,7 +66,7 @@ export class HoapParser {
 
                         // Open and close tag found in the observable chunk
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
-                            const char: number = combinedChunk.at(openTagIndex + open.byteLength)!;
+                            const char: number = combinedChunk[openTagIndex + open.byteLength]!;
 
                             if(this.isFalsePositive(char)) {
                                 chunkOpenPointer = openTagIndex + open.byteLength;
@@ -133,7 +133,7 @@ export class HoapParser {
 
                         // Only open tag found in the observed chunk
                         if (openTagIndex !== -1) {
-                            const char: number = combinedChunk.at(openTagIndex + open.byteLength)!;
+                            const char: number = combinedChunk[openTagIndex + open.byteLength]!;
 
                             if(this.isFalsePositive(char)) {
                                 chunkOpenPointer = openTagIndex + open.byteLength;
@@ -334,30 +334,30 @@ export class HoapParser {
         openTagIndex: number,
         open: Buffer<ArrayBuffer>
     ): Buffer<ArrayBuffer> {
-        let attribute: Buffer<ArrayBuffer> = Buffer.alloc(0);
+        // Calculate the starting position for attributes
+        const attributeStart: number = openTagIndex + open.length;
 
-        if (chunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
-            let attributesPointer: number = openTagIndex + open.byteLength + 1;
-
-            while(true) {
-                if (chunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
-                    break;
-                }
-
-                const value: Buffer<ArrayBuffer> = Buffer.from([
-                    chunk.at(attributesPointer)!
-                ]);
-
-                attributesPointer++;
-
-                attribute = Buffer.concat([attribute, value])
-            }
+        // If the next character after the open tag is '>', return an empty buffer
+        if (chunk[attributeStart] === XML.GT_TAG[0]) {
+            return Buffer.alloc(0);
         }
 
-        return attribute;
+        // Initialize a list to store attribute bytes
+        const attributeBytes: number[] = [];
+
+        // Iterate through the chunk starting from the attributes position
+        for (let i: number = attributeStart + 1; i < chunk.length; i++) {
+            if (chunk[i] === XML.GT_TAG[0]) {
+                break; // Stop when we encounter the closing '>'
+            }
+
+            attributeBytes.push(chunk[i]!);
+        }
+
+        return Buffer.from(attributeBytes);
     }
 
     private isFalsePositive(char: number): boolean {
-        return (char !== XML.GT_TAG.at(0)) && (char !== XML.BLANK_SPACE.at(0));
+        return (char !== XML.GT_TAG[0]) && (char !== XML.BLANK_SPACE[0]);
     }
 }
