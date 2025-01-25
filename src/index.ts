@@ -25,7 +25,7 @@ const hoap: HoapParser = new HoapParser(config);
 
 const https = new Https(hoap);
 
-const {promise, abort} = https.do("www.dataaccess.com/webservicesserver/NumberConversion.wso");
+const {promise, abort} = https.do("www.dataaccess.com/webservicesserver/NumberConversion.wso", 1);
 
 promise.then((result) => {
     console.log(result);

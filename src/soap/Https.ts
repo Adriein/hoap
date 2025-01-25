@@ -7,13 +7,15 @@ import { request } from 'node:https';
 import { ClientRequest, IncomingMessage} from "node:http";
 import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
+import {HTTP_STATUS} from "@shared/Constants";
+import { Socket } from 'node:net';
 
 export class Https {
     public constructor(
         private parser: HoapParser,
     ) {}
 
-    public do(url: string): SoapRequest {
+    public do(url: string, timeout: number): SoapRequest {
         const [host, ...path] = url.split("/");
 
         const options = {
@@ -27,6 +29,10 @@ export class Https {
 
         const promise = new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
             client = request(options, (readable: IncomingMessage): void => {
+                if(readable.statusCode !== HTTP_STATUS.SUCCESS) {
+
+                }
+
                 this.parser.parse(readable)
                     .then((data: Result): void => resolve(data))
                     .catch((error: Error): void => {
@@ -36,12 +42,16 @@ export class Https {
                     });
             });
 
-            client.on('error', (error: Error) => {
-                reject(error);
+            client.on('socket', (socket: Socket): void => {
+                socket.setTimeout(timeout);
+                socket.on('timeout', (): void => {
+                    reject(new Error("Timeout jeje"));
+                    socket.destroy();
+                });
             });
 
-            client.on('close', (a: any) => {
-                console.log(a)
+            client.on('error', (error: Error): void => {
+                reject(error);
             });
 
             client.write(this.buildRequest());

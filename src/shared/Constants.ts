@@ -19,3 +19,7 @@ export const XML = {
     GT_TAG: Buffer.from(">", UTF_8_ENCODING),
     BLANK_SPACE: Buffer.from(" ", UTF_8_ENCODING),
 }
+
+export enum HTTP_STATUS {
+    SUCCESS = 200,
+}
