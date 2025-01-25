@@ -64,14 +64,16 @@ export class HoapParser {
                         const openTagIndex: number = combinedChunk.indexOf(open, chunkOpenPointer);
                         const closeTagIndex: number = combinedChunk.indexOf(close, chunkClosePointer);
 
-                        if(openTagIndex !== -1 && this.isFalsePositive(combinedChunk.at(openTagIndex + open.byteLength)!)) {
-                            chunkOpenPointer = openTagIndex + open.byteLength;
-
-                            continue;
-                        }
-
                         // Open and close tag found in the observable chunk
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
+                            const char: number = combinedChunk.at(openTagIndex + open.byteLength)!;
+
+                            if(this.isFalsePositive(char)) {
+                                chunkOpenPointer = openTagIndex + open.byteLength;
+
+                                continue;
+                            }
+
                             // The closing tag index is greater than opening tag
                             // meaning that is a closing tag from another chunk
                             if(closeTagIndex < openTagIndex) {
@@ -131,6 +133,14 @@ export class HoapParser {
 
                         // Only open tag found in the observed chunk
                         if (openTagIndex !== -1) {
+                            const char: number = combinedChunk.at(openTagIndex + open.byteLength)!;
+
+                            if(this.isFalsePositive(char)) {
+                                chunkOpenPointer = openTagIndex + open.byteLength;
+
+                                continue;
+                            }
+
                             if(type !== XML_NODE_TYPE) {
                                 securityBytesBuffer = combinedChunk.byteLength - openTagIndex;
 
