@@ -5,9 +5,8 @@
 
 import { request } from 'node:https';
 import { ClientRequest, IncomingMessage} from "node:http";
-import {HoapParser} from "@parser/HoapParser";
 import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
-import {Socket} from "node:net";
+import {HoapParser} from "@parser/HoapParser";
 
 export class Https {
     public do(host: string, parser: HoapParser): SoapRequest {

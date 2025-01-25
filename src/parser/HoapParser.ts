@@ -28,12 +28,10 @@ export class HoapParser {
     }
 
     public parse(stream: Readable): Promise<Result> {
-        return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void) => {
+        return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void): void => {
             if (!this.config.path) {
                 throw ParserConfigError.noPathProvided();
             }
-
-            let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
             const result: Result = {
                 $name: "root",
@@ -45,65 +43,55 @@ export class HoapParser {
                 }
             }
 
-
             this.RESULT_TREE_HASH_MAP.set("root", [result]);
 
-            let globalIndexPosition: number = 0;
+            let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
+            let globalStdPointer: number = 0;
 
             stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
-                const chunkCombinedWithLeftover: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
+                const combinedChunk: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
                 let securityBytesBuffer: number = 0;
 
                 XmlTreeTraverser.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode, path: string): void => {
                     const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
-                    let observedChunk: Buffer<ArrayBuffer> = chunkCombinedWithLeftover;
-                    let subtractedChunkBytes: number = 0;
-
-                    let openTagIndex: number = 0;
-                    let closeTagIndex: number = 0;
-
-                    let attribute: Buffer<ArrayBuffer> = Buffer.alloc(0);
+                    let chunkOpenPointer: number = 0;
+                    let chunkClosePointer: number = 0;
 
                     // The parser try to find all occurrences of the current tag
-                    while(openTagIndex !== -1) {
-                        openTagIndex = observedChunk.indexOf(open);
-                        closeTagIndex = observedChunk.indexOf(close);
+                    while(true) {
+                        const openTagIndex: number = combinedChunk.indexOf(open, chunkOpenPointer);
+                        const closeTagIndex: number = combinedChunk.indexOf(close, chunkClosePointer);
+
+                        if(openTagIndex !== -1 && this.isFalsePositive(combinedChunk.at(openTagIndex + open.byteLength)!)) {
+                            chunkOpenPointer = openTagIndex + open.byteLength;
+
+                            continue;
+                        }
 
                         // Open and close tag found in the observable chunk
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
                             // The closing tag index is greater than opening tag
                             // meaning that is a closing tag from another chunk
                             if(closeTagIndex < openTagIndex) {
-                                this.closeOpenNode(path, closeTagIndex + globalIndexPosition);
+                                this.closeOpenNode(path, closeTagIndex + globalStdPointer);
 
-                                const currentObservedChunkBytes: number = observedChunk.byteLength;
-
-                                observedChunk = observedChunk.subarray(
-                                    closeTagIndex + close.byteLength,
-                                    chunkCombinedWithLeftover.byteLength
-                                );
-
-                                subtractedChunkBytes = this.calculateSubtractedChunkBytes(
-                                    subtractedChunkBytes,
-                                    currentObservedChunkBytes,
-                                    observedChunk.byteLength
-                                );
+                                chunkClosePointer = closeTagIndex + close.byteLength;
 
                                 continue;
                             }
 
                             if(type !== XML_NODE_TYPE) {
-                                const rawBinaryValue: Buffer<ArrayBuffer> = observedChunk.subarray(
+                                const rawBinaryValue: Buffer<ArrayBuffer> = combinedChunk.subarray(
                                     openTagIndex + open.byteLength + 1,
                                     closeTagIndex
                                 );
 
                                 const result: Result = this.createResultNode(
                                     original,
-                                    openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                    closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                    openTagIndex + globalStdPointer,
+                                    closeTagIndex + globalStdPointer,
                                     rawBinaryValue.toString(UTF_8_ENCODING)
                                 )
 
@@ -111,45 +99,22 @@ export class HoapParser {
 
                                 this.append(path, result);
 
-                                const currentObservedChunkBytes: number = observedChunk.byteLength;
-
-                                observedChunk = observedChunk.subarray(
-                                    closeTagIndex + close.byteLength,
-                                    chunkCombinedWithLeftover.byteLength
-                                );
-
-                                subtractedChunkBytes = this.calculateSubtractedChunkBytes(
-                                    subtractedChunkBytes,
-                                    currentObservedChunkBytes,
-                                    observedChunk.byteLength
-                                );
+                                chunkOpenPointer = closeTagIndex + close.byteLength;
+                                chunkClosePointer = closeTagIndex + close.byteLength;
 
                                 continue;
                             }
 
-                            //Check if open tag has attributes on it
-                            if (observedChunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
-                                let attributesPointer: number = openTagIndex + open.byteLength + 1;
-
-                                while(true) {
-                                    if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
-                                        break;
-                                    }
-
-                                    const value: Buffer<ArrayBuffer> = Buffer.from([
-                                        observedChunk.at(attributesPointer)!
-                                    ]);
-
-                                    attribute = Buffer.concat([attribute, value])
-
-                                    attributesPointer++;
-                                }
-                            }
+                            const attribute: Buffer<ArrayBuffer> = this.extractAttributes(
+                                combinedChunk,
+                                openTagIndex,
+                                open
+                            );
 
                             const result: Result = this.createResultNode(
                                 original,
-                                openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                openTagIndex + globalStdPointer,
+                                closeTagIndex + globalStdPointer,
                                 null,
                                 attribute.length? attribute.toString(UTF_8_ENCODING) : null,
                             )
@@ -158,18 +123,8 @@ export class HoapParser {
 
                             this.append(path, result);
 
-                            const currentObservedChunkBytes: number = observedChunk.byteLength;
-
-                            observedChunk = observedChunk.subarray(
-                                closeTagIndex + close.byteLength,
-                                chunkCombinedWithLeftover.byteLength
-                            );
-
-                            subtractedChunkBytes = this.calculateSubtractedChunkBytes(
-                                subtractedChunkBytes,
-                                currentObservedChunkBytes,
-                                observedChunk.byteLength
-                            );
+                            chunkOpenPointer = closeTagIndex + close.byteLength;
+                            chunkClosePointer = closeTagIndex + close.byteLength;
 
                             continue;
                         }
@@ -177,34 +132,21 @@ export class HoapParser {
                         // Only open tag found in the observed chunk
                         if (openTagIndex !== -1) {
                             if(type !== XML_NODE_TYPE) {
-                                securityBytesBuffer = chunk.byteLength - (openTagIndex + subtractedChunkBytes);
+                                securityBytesBuffer = combinedChunk.byteLength - openTagIndex;
 
                                 break;
                             }
 
-                            //Check if open tag has attributes on it
-                            if (observedChunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
-                                let attributesPointer: number = openTagIndex + open.byteLength + 1;
-
-                                while(true) {
-                                    if (observedChunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
-                                        break;
-                                    }
-
-                                    const value: Buffer<ArrayBuffer> = Buffer.from([
-                                        observedChunk.at(attributesPointer)!
-                                    ]);
-
-                                    attribute = Buffer.concat([attribute, value])
-
-                                    attributesPointer++;
-                                }
-                            }
+                            const attribute: Buffer<ArrayBuffer> = this.extractAttributes(
+                                combinedChunk,
+                                openTagIndex,
+                                open
+                            );
 
                             const result: Result = this.createResultNode(
                                 original,
-                                openTagIndex + globalIndexPosition + subtractedChunkBytes,
-                                closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes,
+                                openTagIndex + globalStdPointer,
+                                -1,
                                 null,
                                 attribute.length? attribute.toString(UTF_8_ENCODING) : null,
                             );
@@ -213,27 +155,18 @@ export class HoapParser {
 
                             this.append(path, result);
 
-                            const currentObservedChunkBytes: number = observedChunk.byteLength;
-
-                            observedChunk = observedChunk.subarray(
-                                openTagIndex + open.byteLength,
-                                chunkCombinedWithLeftover.byteLength
-                            );
-
-                            subtractedChunkBytes = this.calculateSubtractedChunkBytes(
-                                subtractedChunkBytes,
-                                currentObservedChunkBytes,
-                                observedChunk.byteLength
-                            );
+                            break;
                         }
+
+                        break;
                     }
                 });
 
-                const start: number = chunkCombinedWithLeftover.byteLength - securityBytesBuffer;
+                const start: number = combinedChunk.byteLength - securityBytesBuffer;
 
-                bufferLeftover = chunkCombinedWithLeftover.subarray(start, chunkCombinedWithLeftover.length);
+                bufferLeftover = combinedChunk.subarray(start, combinedChunk.length);
 
-                globalIndexPosition = globalIndexPosition + chunk.byteLength;
+                globalStdPointer += chunk.byteLength;
             });
 
             stream.on("end", (): void => resolve(result));
@@ -267,9 +200,9 @@ export class HoapParser {
                 const parent: Result = parents[i]!;
 
                 if (parent.$position.close === -1) {
-                   this.addLeafToPojo(parent, node);
+                    this.addLeafToPojo(parent, node);
 
-                   break;
+                    break;
                 }
             }
 
@@ -339,6 +272,7 @@ export class HoapParser {
      * @param open Position of the XML openTag relative to the whole XML response
      * @param close Position of the XML closeTag relative to the whole XML response
      * @param value Value of the tag in case is a data node
+     * @param attribute
      * @returns Result
      */
     private createResultNode(
@@ -354,21 +288,6 @@ export class HoapParser {
             $attribute: attribute,
             $position: {open, close},
         };
-    }
-
-    /**
-     * Calculate new value for subtracted chunk bytes counter
-     * @param alreadySubtractedBytes Sum of already subtracted bytes of the same chunk
-     * @param currentObservedChunkByteLength Byte length of the current observed chunk
-     * @param cutChunkByteLength Byte length of the new subarray that has been promoted to observed chunk
-     * @returns number
-     */
-    private calculateSubtractedChunkBytes(
-        alreadySubtractedBytes: number,
-        currentObservedChunkByteLength: number,
-        cutChunkByteLength: number
-    ): number {
-        return alreadySubtractedBytes + (currentObservedChunkByteLength - cutChunkByteLength);
     }
 
     /**
@@ -391,5 +310,44 @@ export class HoapParser {
         }
 
         parent[node.$name] = node;
+    }
+
+    /**
+     * Extract attributes from opening XML tag
+     * @returns Buffer<ArrayBuffer>
+     * @param chunk
+     * @param openTagIndex
+     * @param open
+     */
+    private extractAttributes(
+        chunk: Buffer<ArrayBuffer>,
+        openTagIndex: number,
+        open: Buffer<ArrayBuffer>
+    ): Buffer<ArrayBuffer> {
+        let attribute: Buffer<ArrayBuffer> = Buffer.alloc(0);
+
+        if (chunk.at(openTagIndex + open.byteLength) != XML.GT_TAG.at(0)) {
+            let attributesPointer: number = openTagIndex + open.byteLength + 1;
+
+            while(true) {
+                if (chunk.at(attributesPointer) == XML.GT_TAG.at(0)) {
+                    break;
+                }
+
+                const value: Buffer<ArrayBuffer> = Buffer.from([
+                    chunk.at(attributesPointer)!
+                ]);
+
+                attributesPointer++;
+
+                attribute = Buffer.concat([attribute, value])
+            }
+        }
+
+        return attribute;
+    }
+
+    private isFalsePositive(char: number): boolean {
+        return (char !== XML.GT_TAG.at(0)) && (char !== XML.BLANK_SPACE.at(0));
     }
 }
