@@ -3,26 +3,20 @@
  * MIT Licensed
  */
 
-import {Agent, request, RequestOptions } from 'node:https';
-import { ClientRequest, IncomingMessage} from "node:http";
+import {request, RequestOptions} from 'node:https';
+import {ClientRequest, IncomingMessage} from "node:http";
 import {Result, SoapHttpOptions} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
 import {HTTP_STATUS} from "@shared/Constants";
-import { Socket } from 'node:net';
+import {Socket} from 'node:net';
 import {HttpError} from "@soap/Error/HttpError";
+import {SoapHttpConfig} from "@soap/SoapHttpConfig";
 
 export class Https {
-    private readonly DEFAULT_TIMEOUT: number = 60_000;
-    private readonly keepAliveAgent: Agent;
-
     public constructor(
         private readonly parser: HoapParser,
-    ) {
-        this.keepAliveAgent = new Agent({
-            keepAlive: true,
-            maxSockets: 500,
-        });
-    }
+        private readonly instanceConfig: SoapHttpConfig,
+    ) {}
 
     public do(url: string, options?: SoapHttpOptions): Promise<Result> {
         const [host, ...path] = url.split("/");
@@ -33,8 +27,8 @@ export class Https {
             method: 'POST',
             headers: { 'Content-Type': 'text/xml; charset=utf-8' },
             signal: options?.abortSignal,
-            timeout: options?.timeout ?? this.DEFAULT_TIMEOUT,
-            agent: this.keepAliveAgent,
+            timeout: options?.timeout ?? this.instanceConfig.defaultTimeout,
+            agent: this.instanceConfig.agent,
         };
 
         let client: ClientRequest | null = null;
