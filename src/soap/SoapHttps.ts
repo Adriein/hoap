@@ -46,7 +46,6 @@ export class SoapHttps {
                     .then((data: Result): void => resolve(data))
                     .catch((error: Error): void => {
                         client?.destroy();
-
                         reject(error);
                     });
             });

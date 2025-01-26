@@ -41,5 +41,5 @@ const request: Promise<Result> = https.do(
 );
 
 request.then((result: Result): void => {
-    console.log('result');
+    console.log(result);
 });
