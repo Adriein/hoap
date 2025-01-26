@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Adria Claret <adria.claret@gmail.com>
+ * MIT Licensed
+ */
+
 import {Agent} from "node:https";
 
 export class SoapHttpConfig {

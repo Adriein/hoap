@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 Adria Claret <adria.claret@gmail.com>
+ * MIT Licensed
+ */
+
 import fs, {ReadStream} from "node:fs";
 import {HoapParser} from "@parser/HoapParser";
 import {Result, WatchedXmlTagsJson} from "@shared/Types";
