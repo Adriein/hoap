@@ -9,6 +9,7 @@ import {Result, SoapRequest, SoapRequestAbortFn} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
 import {HTTP_STATUS} from "@shared/Constants";
 import { Socket } from 'node:net';
+import {HttpError} from "@soap/Error/HttpError";
 
 export class Https {
     public constructor(
@@ -30,7 +31,9 @@ export class Https {
         const promise = new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
             client = request(options, (readable: IncomingMessage): void => {
                 if(readable.statusCode !== HTTP_STATUS.SUCCESS) {
+                    reject(HttpError.unsuccessful(readable.statusCode, readable.statusMessage));
 
+                    return;
                 }
 
                 this.parser.parse(readable)
@@ -45,7 +48,7 @@ export class Https {
             client.on('socket', (socket: Socket): void => {
                 socket.setTimeout(timeout);
                 socket.on('timeout', (): void => {
-                    reject(new Error("Timeout jeje"));
+                    reject(HttpError.timeout());
                     socket.destroy();
                 });
             });
