@@ -7,7 +7,7 @@ import {ParserConfig} from "@parser/ParserConfig";
 import {Result, WatchedXmlTagsJson} from "@shared/Types";
 import {UTF_8_ENCODING} from "@shared/Constants";
 import fs from "node:fs";
-import {Https} from "@soap/Https";
+import {SoapHttps} from "@soap/SoapHttps";
 import {HoapParser} from "@parser/HoapParser";
 import {SoapHttpConfig} from "@soap/SoapHttpConfig";
 import {Agent} from "node:https";
@@ -34,7 +34,7 @@ const httpConfig: SoapHttpConfig = SoapHttpConfig
     .instance()
     .withAgent(keepAliveAgent);
 
-const https = new Https(hoap, httpConfig);
+const https = new SoapHttps(hoap, httpConfig);
 
 const request: Promise<Result> = https.do(
     "www.dataaccess.com/webservicesserver/NumberConversion.wso",

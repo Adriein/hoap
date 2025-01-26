@@ -12,7 +12,7 @@ import {Socket} from 'node:net';
 import {HttpError} from "@soap/Error/HttpError";
 import {SoapHttpConfig} from "@soap/SoapHttpConfig";
 
-export class Https {
+export class SoapHttps {
     public constructor(
         private readonly parser: HoapParser,
         private readonly instanceConfig: SoapHttpConfig,
