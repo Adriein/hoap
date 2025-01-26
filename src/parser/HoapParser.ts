@@ -173,7 +173,10 @@ export class HoapParser {
                 globalStdPointer += chunk.byteLength;
             });
 
-            stream.on("end", (): void => resolve(result));
+            stream.on("end", (): void => {
+                result.$position.close = globalStdPointer;
+                resolve(result);
+            });
 
             stream.on("error", (error: Error): void => {
                 reject(error);

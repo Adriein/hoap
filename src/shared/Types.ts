@@ -36,13 +36,6 @@ export type Result = {
 
 export type InRangeFn =  (node: Result, openTagIndex: number, closeTagIndex: number) => boolean;
 
-export type SoapRequestAbortFn = () => void;
-
-export type SoapRequest = {
-    promise: Promise<Result>,
-    abort: SoapRequestAbortFn,
-}
-
 export type SoapHttpOptions = {
     timeout?: number;
     abortSignal?: AbortSignal
