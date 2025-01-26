@@ -42,3 +42,8 @@ export type SoapRequest = {
     promise: Promise<Result>,
     abort: SoapRequestAbortFn,
 }
+
+export type SoapHttpOptions = {
+    timeout?: number;
+    abortSignal?: AbortSignal
+}
