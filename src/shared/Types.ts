@@ -40,3 +40,10 @@ export type SoapHttpOptions = {
     timeout?: number;
     abortSignal?: AbortSignal
 }
+
+export type JsonXmlBodyStruct = {
+    tag: string;
+    attributes: string[];
+    value: any;
+    children: JsonXmlBodyStruct[];
+};
