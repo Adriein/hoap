@@ -2,31 +2,26 @@ import {JsonXmlBodyStruct} from "@shared/Types";
 
 export class JsonToXmlTransformer {
     public execute({tag, value, children, attributes}: JsonXmlBodyStruct): string {
-        // Since is the last node it should always have a value
+        if (!tag) {
+            throw new Error("Tag is required.");
+        }
+
+        const openingTag = attributes.length
+            ? `<${tag} ${attributes.join(" ")}>`
+            : `<${tag}>`;
+
+        const closingTag = `</${tag}>`;
+
         if (!children.length) {
-            if (attributes.length) {
-                return `
-                    <${tag} ${attributes.join(" ")}>${value}</${tag}>
-                `;
-            }
-
-            return `
-                <${tag}>${value}</${tag}>
-            `;
+            return `${openingTag}${value}${closingTag}`;
         }
 
-        if (attributes.length) {
-            return `
-                <${tag} ${attributes.join(" ")}>
-                    ${this.execute(children[0]!)}
-                </${tag}>
-            `;
-        }
+        const childrenXml: string = children.map((child: JsonXmlBodyStruct): string => this.execute(child)).join("");
 
         return `
-            <${tag}>
-                ${this.execute(children[0]!)}
-            </${tag}>
+            ${openingTag}
+                ${childrenXml}
+            ${closingTag}
         `;
     }
 }
