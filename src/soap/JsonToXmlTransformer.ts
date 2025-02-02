@@ -6,17 +6,17 @@ export class JsonToXmlTransformer {
             throw new Error("Tag is required.");
         }
 
-        const openingTag = attributes.length
+        const openingTag = attributes?.length
             ? `<${tag} ${attributes.join(" ")}>`
             : `<${tag}>`;
 
         const closingTag = `</${tag}>`;
 
-        if (!children.length) {
+        if (!children?.length) {
             return `${openingTag}${value}${closingTag}`;
         }
 
-        const childrenXml: string = children.map((child: JsonXmlBodyStruct): string => this.execute(child)).join("");
+        const childrenXml: string = children.map((child: JsonXmlBodyStruct): string => this.execute(child)).join("\n");
 
         return `
             ${openingTag}

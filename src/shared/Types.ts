@@ -43,7 +43,7 @@ export type SoapHttpOptions = {
 
 export type JsonXmlBodyStruct = {
     tag: string;
-    attributes: string[];
-    value: any;
-    children: JsonXmlBodyStruct[];
+    attributes?: string[];
+    value?: any;
+    children?: JsonXmlBodyStruct[];
 };
