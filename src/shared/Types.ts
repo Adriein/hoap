@@ -37,8 +37,9 @@ export type Result = {
 export type InRangeFn =  (node: Result, openTagIndex: number, closeTagIndex: number) => boolean;
 
 export type SoapHttpOptions = {
+    header?: Record<string, string>;
     timeout?: number;
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal;
 }
 
 export type JsonXmlBodyStruct = {

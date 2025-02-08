@@ -21,11 +21,15 @@ export class SoapHttps {
     public do(url: string, body: string, options?: SoapHttpOptions): Promise<Result> {
         const [host, ...path] = url.split("/");
 
+        const header: Record<string, string> = options?.header?
+            { 'Content-Type': 'text/xml; charset=utf-8', ...options.header} :
+            { 'Content-Type': 'text/xml; charset=utf-8'};
+
         const nodeStdHttpOptions: RequestOptions = {
             hostname: host,
             path: `/${path.join("/")}`,
             method: 'POST',
-            headers: { 'Content-Type': 'text/xml; charset=utf-8' },
+            headers: header,
             signal: options?.abortSignal,
             timeout: options?.timeout ?? this.instanceConfig.defaultTimeout,
             agent: this.instanceConfig.agent,

@@ -18,6 +18,7 @@ export class SoapClient {
         private readonly transformer: JsonToXmlTransformer,
         private readonly soapHeaders: JsonXmlBodyStruct[] = [],
         private readonly httpHeaders: Record<string, string> = {},
+        private body: string = "",
     ) {}
 
     public addHttpHeader(key: string, value: string): SoapClient {
@@ -32,14 +33,18 @@ export class SoapClient {
         return this;
     }
 
-    public async execute(body: JsonXmlBodyStruct): Promise<Result> {
-        const xmlBody: string = this.buildRequest(body)
+    public withBody(body: JsonXmlBodyStruct): SoapClient {
+        this.body = this.buildRequest(body)
             .replace(/[\n\r]/g, '')
             .replace(/>\s+</g, '><') // Remove spaces between tags
             .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
             .trim();
 
-        return await this.https.do(this.url, xmlBody);
+        return this;
+    }
+
+    public async makeRequest(): Promise<Result> {
+        return await this.https.do(this.url, this.body, { header: this.httpHeaders });
     }
 
     private buildRequest(jsonFormatBody: JsonXmlBodyStruct): string {
