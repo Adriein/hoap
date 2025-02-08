@@ -24,7 +24,7 @@ export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
     private readonly RESULT_TREE_HASH_MAP: Map<string, Result[]> = new Map<string, Result[]>();
 
-    public constructor(config: ParserConfig) {
+    public constructor(private config: ParserConfig) {
         if (!config.configFile) {
             throw ParserConfigError.noConfigFile()
         }
@@ -34,6 +34,7 @@ export class HoapParser {
 
     public parse(stream: Readable): Promise<Result> {
         return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void): void => {
+            const debugData: string[] = [];
             const result: Result = {
                 $name: "root",
                 $value: null,
@@ -50,6 +51,10 @@ export class HoapParser {
             let globalStdPointer: number = 0;
 
             stream.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
+                if (this.config.debugMode) {
+                    debugData.push(chunk.toString(UTF_8_ENCODING));
+                }
+
                 const combinedChunk: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
                 let securityBytesBuffer: number = 0;
@@ -181,6 +186,7 @@ export class HoapParser {
             });
 
             stream.on(NODE_STREAM_END_EVENT, (): void => {
+                console.log(debugData)
                 result.$position.close = globalStdPointer;
                 resolve(result);
             });

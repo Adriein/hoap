@@ -8,6 +8,7 @@ import {WatchedXmlTagsJson} from "@shared/Types";
 export class ParserConfig {
     private constructor(
         private _encoding: BufferEncoding = "binary",
+        private _debugMode: boolean = false,
         private _configFile?: WatchedXmlTagsJson,
         private _path?: string | undefined,
     ) {}
@@ -34,6 +35,12 @@ export class ParserConfig {
         return this;
     }
 
+    public onDebugMode(): ParserConfig {
+        this._debugMode = true;
+
+        return this;
+    }
+
 
     public get encoding(): BufferEncoding {
         return this._encoding;
@@ -45,5 +52,9 @@ export class ParserConfig {
 
     public get configFile(): WatchedXmlTagsJson | undefined {
         return this._configFile;
+    }
+
+    public get debugMode(): boolean {
+        return this._debugMode;
     }
 }
