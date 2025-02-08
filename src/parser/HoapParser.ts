@@ -6,7 +6,14 @@
 import {Readable} from "node:stream";
 import {ParserConfig} from "@parser/ParserConfig";
 import {InstructionTreeBuilder} from "@parser/Shared/Builder";
-import {UTF_8_ENCODING, XML, XML_NODE_TYPE} from "@shared/Constants";
+import {
+    NODE_STREAM_DATA_EVENT,
+    NODE_STREAM_END_EVENT,
+    NODE_STREAM_ERROR_EVENT,
+    UTF_8_ENCODING,
+    XML,
+    XML_NODE_TYPE
+} from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
 import {RawBinaryXmlTagPair, Result} from "@shared/Types";
@@ -42,7 +49,7 @@ export class HoapParser {
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
             let globalStdPointer: number = 0;
 
-            stream.on("data", (chunk: Buffer<ArrayBuffer>): void => {
+            stream.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
                 const combinedChunk: Buffer<ArrayBuffer> = Buffer.concat([bufferLeftover, chunk]);
 
                 let securityBytesBuffer: number = 0;
@@ -173,12 +180,12 @@ export class HoapParser {
                 globalStdPointer += chunk.byteLength;
             });
 
-            stream.on("end", (): void => {
+            stream.on(NODE_STREAM_END_EVENT, (): void => {
                 result.$position.close = globalStdPointer;
                 resolve(result);
             });
 
-            stream.on("error", (error: Error): void => {
+            stream.on(NODE_STREAM_ERROR_EVENT, (error: Error): void => {
                 reject(error);
             });
         });

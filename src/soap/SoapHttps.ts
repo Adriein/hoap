@@ -7,7 +7,7 @@ import {request, RequestOptions} from 'node:https';
 import {ClientRequest, IncomingMessage} from "node:http";
 import {Result, SoapHttpOptions} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
-import {HTTP_STATUS} from "@shared/Constants";
+import {HTTP_STATUS, NODE_STREAM_DATA_EVENT, NODE_STREAM_END_EVENT} from "@shared/Constants";
 import {Socket} from 'node:net';
 import {HttpError} from "@soap/Error/HttpError";
 import {SoapHttpConfig} from "@soap/SoapHttpConfig";
@@ -40,8 +40,27 @@ export class SoapHttps {
         return new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
             client = request(nodeStdHttpOptions, (readable: IncomingMessage): void => {
                 if(readable.statusCode !== HTTP_STATUS.SUCCESS) {
-                    reject(HttpError.unsuccessful(readable.statusCode, readable.statusMessage));
-                    client?.destroy();
+                    const errorBody: Buffer<ArrayBuffer>[] = [];
+
+                    readable.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
+                        errorBody.push(chunk);
+                    });
+
+                    readable.on(NODE_STREAM_END_EVENT, () => {
+                        try {
+                            const error: HttpError = HttpError.unsuccessful(
+                                readable.statusCode,
+                                readable.statusMessage,
+                                errorBody.join("")
+                            );
+
+                            reject(error);
+
+                            client?.destroy();
+                        } catch (error) {
+                            console.error('Error parsing response:', error);
+                        }
+                    });
 
                     return;
                 }

@@ -6,21 +6,35 @@
 import {LibStdError} from "@shared/Error";
 
 export class HttpError extends LibStdError {
+    private static REQUEST_FAILED: string = "REQUEST_FAILED";
+    private static UNEXPECTED_REQUEST_FAILED: string = "UNEXPECTED_REQUEST_FAILED";
+    private static TIMEOUT: string = "TIMEOUT";
+
     public static timeout(): HttpError {
-        return new HttpError("Timeout", LibStdError.ERROR_CODES.TIMEOUT);
+        return new HttpError(HttpError.TIMEOUT, LibStdError.ERROR_CODES.TIMEOUT);
     }
 
-    public static unsuccessful(httpCode?: number, message?: string): HttpError {
-        if (httpCode && message) {
-            return new HttpError(
-                `Request failed with code ${httpCode}, ${message}`,
-                LibStdError.ERROR_CODES.UNSUCCESSFUL_REQUEST
-            );
-        }
-
+    public static unsuccessful(httpCode?: number, httpMessage?: string, httpErrorBody?: string): HttpError {
         return new HttpError(
-            `Request failed`,
-            LibStdError.ERROR_CODES.UNSUCCESSFUL_REQUEST
+            HttpError.REQUEST_FAILED,
+            LibStdError.ERROR_CODES.UNSUCCESSFUL_REQUEST,
+            httpCode,
+            httpMessage,
+            httpErrorBody
         );
+    }
+
+    public constructor(
+        public message: string,
+        public code: number,
+        public httpCode?: number,
+        public httpMessage?: string,
+        public httpErrorBody?: string,
+    ) {
+        super(message, code);
+
+        this.httpCode = httpCode;
+        this.httpMessage = httpMessage;
+        this.httpErrorBody = httpErrorBody;
     }
 }

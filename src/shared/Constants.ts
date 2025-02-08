@@ -7,7 +7,9 @@ export const UTF_8_ENCODING: BufferEncoding = "utf8";
 
 export const XML_NODE_TYPE = "xml-node";
 
-export const XML_DATA_TYPE = "xml-data:";
+export const NODE_STREAM_DATA_EVENT = "data";
+export const NODE_STREAM_END_EVENT = "end";
+export const NODE_STREAM_ERROR_EVENT = "error";
 
 export enum ParsingNodeStatus {
     OPEN = "OPEN",
