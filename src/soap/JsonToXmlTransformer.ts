@@ -1,9 +1,10 @@
 import {JsonXmlBodyStruct} from "@shared/Types";
+import {XmlTransformerError} from "@soap/Error/XmlTransformerError";
 
 export class JsonToXmlTransformer {
     public execute({tag, value, children, attributes}: JsonXmlBodyStruct): string {
         if (!tag) {
-            throw new Error("Tag is required.");
+            throw XmlTransformerError.noTag();
         }
 
         const openingTag = attributes?.length

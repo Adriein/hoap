@@ -7,7 +7,6 @@ import {LibStdError} from "@shared/Error";
 
 export class HttpError extends LibStdError {
     private static REQUEST_FAILED: string = "REQUEST_FAILED";
-    private static UNEXPECTED_REQUEST_FAILED: string = "UNEXPECTED_REQUEST_FAILED";
     private static TIMEOUT: string = "TIMEOUT";
 
     public static timeout(): HttpError {

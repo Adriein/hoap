@@ -10,6 +10,7 @@ export class LibStdError extends Error {
         NODE_PARENT_NOT_FOUND: 3,
         TIMEOUT: 4,
         UNSUCCESSFUL_REQUEST: 5,
+        NO_TAG_PRESENT: 6
     };
 
     public constructor(public message: string, public code: number) {

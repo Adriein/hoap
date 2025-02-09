@@ -186,7 +186,10 @@ export class HoapParser {
             });
 
             stream.on(NODE_STREAM_END_EVENT, (): void => {
-                console.log(debugData)
+                if (this.config.debugMode) {
+                    console.log(debugData)
+                }
+
                 result.$position.close = globalStdPointer;
                 resolve(result);
             });
