@@ -19,11 +19,16 @@
     "sourceMap": true,
     /* If your code doesn't run in the DOM: */
     "lib": ["es2022"],
+    "declaration": true,
     "paths": {
       "@src/*": ["src/*"],
       "@parser/*": ["src/parser/*"],
       "@soap/*": ["src/soap/*"],
-      "@shared/*": ["src/shared/*"],
+      "@shared/*": ["src/shared/*"]
     }
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

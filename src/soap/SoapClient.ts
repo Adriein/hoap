@@ -8,18 +8,21 @@ import {SoapHttps} from "@soap/SoapHttps";
 import {JsonToXmlTransformer} from "@soap/JsonToXmlTransformer";
 
 export class SoapClient {
-    public static instance(url: string, https: SoapHttps, transformer: JsonToXmlTransformer): SoapClient {
-        return new SoapClient(url, https, transformer);
+    private readonly transformer: JsonToXmlTransformer;
+
+    public static instance(url: string, https: SoapHttps): SoapClient {
+        return new SoapClient(url, https);
     }
 
     private constructor(
         private readonly url: string,
         private readonly https: SoapHttps,
-        private readonly transformer: JsonToXmlTransformer,
         private readonly soapHeaders: JsonXmlBodyStruct[] = [],
         private readonly httpHeaders: Record<string, string> = {},
         private body: string = "",
-    ) {}
+    ) {
+        this.transformer = new JsonToXmlTransformer()
+    }
 
     public addHttpHeader(key: string, value: string): SoapClient {
         this.httpHeaders[key] = value;
