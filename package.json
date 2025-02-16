@@ -4,9 +4,6 @@
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
     "test": "vitest run",
     "build": "tsc --build && tsc-alias",
