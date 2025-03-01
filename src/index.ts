@@ -21,7 +21,7 @@ export {SoapHttpConfig} from "@soap/SoapHttpConfig";
 export {SoapClient} from "@soap/SoapClient";
 export {SoapHttps} from "@soap/SoapHttps"
 
-export type {Result, WatchedXmlTagsJson} from "@shared/Types";
+export type {Result, WatchedXmlTagsJson, JsonXmlBodyStruct} from "@shared/Types";
 
 /*const startTime: number = performance.now();
 
