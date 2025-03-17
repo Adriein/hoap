@@ -37,6 +37,10 @@ export class SoapHttps {
 
         let client: ClientRequest | null = null;
 
+        if (this.instanceConfig.debug) {
+            console.log(body);
+        }
+
         return new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
             client = request(nodeStdHttpOptions, (readable: IncomingMessage): void => {
                 if(readable.statusCode !== HTTP_STATUS.SUCCESS) {

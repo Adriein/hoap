@@ -15,6 +15,7 @@ export class SoapHttpConfig {
     private constructor(
         private _defaultTimeout: number = this._DEFAULT_TIMEOUT,
         private _agent?: Agent,
+        private _debug?: boolean,
     ) {}
 
     public withDefaultTimeout(timeout: number): SoapHttpConfig {
@@ -29,6 +30,12 @@ export class SoapHttpConfig {
         return this;
     }
 
+    public withDevelopDebug(): SoapHttpConfig {
+        this._debug = true;
+
+        return this;
+    }
+
 
     public get defaultTimeout(): number {
         return this._defaultTimeout;
@@ -36,5 +43,13 @@ export class SoapHttpConfig {
 
     public get agent(): Agent | undefined{
         return this._agent;
+    }
+
+    public get debug(): boolean {
+        if (!this._debug) {
+            return false;
+        }
+        
+        return this._debug;
     }
 }
