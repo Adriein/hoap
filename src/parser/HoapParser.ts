@@ -49,6 +49,7 @@ export class HoapParser {
 
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
             let globalStdPointer: number = 0;
+            let parserMode: string = "SEARCH_OPEN_TAG";
 
             stream.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
                 if (this.config.debugMode) {
@@ -62,13 +63,53 @@ export class HoapParser {
                 XmlTreeTraverser.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode, path: string): void => {
                     const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
-                    let chunkOpenPointer: number = 0;
-                    let chunkClosePointer: number = 0;
+                    let stdReadPointer: number = 0;
+
+                    const openTagBitmask: number = open.readInt32LE();
+                    const closingTagBitmask: number = close.readInt32LE();
+
+                    const tasks: Buffer<ArrayBuffer>[] = [open, close];
 
                     // The parser try to find all occurrences of the current tag
-                    while(true) {
-                        const openTagIndex: number = combinedChunk.indexOf(open, chunkOpenPointer);
-                        const closeTagIndex: number = combinedChunk.indexOf(close, chunkClosePointer);
+                    while(tasks.length > 0) {
+                        const currentTag: Buffer<ArrayBuffer> | undefined = tasks.shift();
+
+                        if (!currentTag) {
+                            break;
+                        }
+
+                        const tagBitmask: number = currentTag.readInt32LE();
+                        const stream32BitLeChunk: number = combinedChunk.readInt32LE(stdReadPointer);
+
+                        if (!(stream32BitLeChunk ^ tagBitmask)) {
+                            const char: number = combinedChunk[stdReadPointer + open.byteLength]!;
+
+                            if(this.isFalsePositive(char)) {
+                                stdReadPointer = stdReadPointer + open.byteLength;
+
+                                tasks.unshift(currentTag);
+
+                                continue;
+                            }
+
+                            const attribute: Buffer<ArrayBuffer> = this.extractAttributes(
+                                combinedChunk,
+                                openTagIndex,
+                                open
+                            );
+
+                            const result: Result = this.createResultNode(
+                                original,
+                                openTagIndex + globalStdPointer,
+                                -1,
+                                null,
+                                attribute.length? attribute.toString(UTF_8_ENCODING) : null,
+                            );
+
+                            this.registerNewNode(path, result);
+
+                            this.append(path, result);
+                        }
 
                         // Open and close tag found in the observable chunk
                         if (openTagIndex !== -1 && closeTagIndex !== -1) {
