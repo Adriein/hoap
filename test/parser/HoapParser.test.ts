@@ -5,7 +5,7 @@
 
 import fs, {ReadStream} from "node:fs";
 import {HoapParser} from "@parser/HoapParser";
-import {Result, WatchedXmlTagsJson} from "@shared/Types";
+import {Token, WatchedXmlTagsJson} from "@shared/Types";
 import {UTF_8_ENCODING} from "@shared/Constants";
 import {ParserConfig} from "@parser/ParserConfig";
 import {expect, test, describe} from 'vitest'
@@ -32,7 +32,7 @@ describe('HoapParser',  ():void => {
 
         const stream: ReadStream = fs.createReadStream(AMADEUS_TEST_XML);
 
-        const result: Result = await hoap.parse(stream);
+        const result: Token = await hoap.parse(stream);
 
         expect(result).toStrictEqual(baseResult);
     });

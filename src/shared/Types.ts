@@ -23,7 +23,9 @@ export type WatchedXmlTagNode = { name: string, type: string, children?: Watched
 
 export type WatchedXmlTagsJson = { version: string, nodes: WatchedXmlTagNode[] }
 
-export type Result = {
+export type ParserTask = {type: string, tag: Buffer<ArrayBuffer>};
+
+export type Token = {
     [prop: string]: any,
     $name: string;
     $value: any;
@@ -34,7 +36,7 @@ export type Result = {
     };
 };
 
-export type InRangeFn =  (node: Result, openTagIndex: number, closeTagIndex: number) => boolean;
+export type InRangeFn =  (node: Token, openTagIndex: number, closeTagIndex: number) => boolean;
 
 export type SoapHttpOptions = {
     header?: Record<string, string>;

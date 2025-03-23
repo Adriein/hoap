@@ -5,7 +5,7 @@
 
 import {request, RequestOptions} from 'node:https';
 import {ClientRequest, IncomingMessage} from "node:http";
-import {Result, SoapHttpOptions} from "@shared/Types";
+import {Token, SoapHttpOptions} from "@shared/Types";
 import {HoapParser} from "@parser/HoapParser";
 import {HTTP_STATUS, NODE_STREAM_DATA_EVENT, NODE_STREAM_END_EVENT} from "@shared/Constants";
 import {Socket} from 'node:net';
@@ -18,7 +18,7 @@ export class SoapHttps {
         private readonly instanceConfig: SoapHttpConfig,
     ) {}
 
-    public do(url: string, body: string, options?: SoapHttpOptions): Promise<Result> {
+    public do(url: string, body: string, options?: SoapHttpOptions): Promise<Token> {
         const [host, ...path] = url.split("/");
 
         const header: Record<string, string> = options?.header?
@@ -41,7 +41,7 @@ export class SoapHttps {
             console.log(body);
         }
 
-        return new Promise<Result>((resolve: (data: Result) => void, reject: (error: Error) => void): void => {
+        return new Promise<Token>((resolve: (data: Token) => void, reject: (error: Error) => void): void => {
             client = request(nodeStdHttpOptions, (readable: IncomingMessage): void => {
                 if(readable.statusCode !== HTTP_STATUS.SUCCESS) {
                     const errorBody: Buffer<ArrayBuffer>[] = [];
@@ -70,7 +70,7 @@ export class SoapHttps {
                 }
 
                 this.parser.parse(readable)
-                    .then((data: Result): void => resolve(data))
+                    .then((data: Token): void => resolve(data))
                     .catch((error: Error): void => {
                         client?.destroy();
                         reject(error);

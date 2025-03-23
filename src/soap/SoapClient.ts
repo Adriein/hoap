@@ -3,7 +3,7 @@
  * MIT Licensed
  */
 
-import {JsonXmlBodyStruct, Result} from "@shared/Types";
+import {JsonXmlBodyStruct, Token} from "@shared/Types";
 import {SoapHttps} from "@soap/SoapHttps";
 import {JsonToXmlTransformer} from "@soap/JsonToXmlTransformer";
 
@@ -46,7 +46,7 @@ export class SoapClient {
         return this;
     }
 
-    public async makeRequest(): Promise<Result> {
+    public async makeRequest(): Promise<Token> {
         return await this.https.do(this.url, this.body, { header: this.httpHeaders });
     }
 

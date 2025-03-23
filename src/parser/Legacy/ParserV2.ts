@@ -9,13 +9,13 @@ import {InstructionTreeBuilder} from "@parser/Shared/Builder";
 import {UTF_8_ENCODING, XML, XML_NODE_TYPE} from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
-import {RawBinaryXmlTagPair, Result} from "@shared/Types";
+import {RawBinaryXmlTagPair, Token} from "@shared/Types";
 import {isInRange} from "@parser/Shared/Utils";
 import {NodeParentNotFoundError} from "@parser/Shared/Error/NodeParentNotFoundError";
 
 export class ParserV2 {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
-    private readonly RESULT_TREE_HASH_MAP: Map<string, Result[]> = new Map<string, Result[]>();
+    private readonly RESULT_TREE_HASH_MAP: Map<string, Token[]> = new Map<string, Token[]>();
 
     public constructor(
         private config: ParserConfig
@@ -27,15 +27,15 @@ export class ParserV2 {
         this.WATCHED_XML_TAG_TREE = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
     }
 
-    public parse(stream: Readable): Promise<Result> {
-        return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void) => {
+    public parse(stream: Readable): Promise<Token> {
+        return new Promise((resolve: (json: Token) => void, reject: (error: Error) => void) => {
             if (!this.config.path) {
                 throw ParserConfigError.noPathProvided();
             }
 
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
 
-            const result: Result = {
+            const result: Token = {
                 $name: "root",
                 $value: null,
                 $attribute: null,
@@ -100,7 +100,7 @@ export class ParserV2 {
                                     closeTagIndex
                                 );
 
-                                const result: Result = this.createResultNode(
+                                const result: Token = this.createResultNode(
                                     original,
                                     openTagIndex + globalIndexPosition + subtractedChunkBytes,
                                     closeTagIndex + globalIndexPosition + subtractedChunkBytes,
@@ -146,7 +146,7 @@ export class ParserV2 {
                                 }
                             }
 
-                            const result: Result = this.createResultNode(
+                            const result: Token = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
                                 closeTagIndex + globalIndexPosition + subtractedChunkBytes,
@@ -201,7 +201,7 @@ export class ParserV2 {
                                 }
                             }
 
-                            const result: Result = this.createResultNode(
+                            const result: Token = this.createResultNode(
                                 original,
                                 openTagIndex + globalIndexPosition + subtractedChunkBytes,
                                 closeTagIndex === -1 ? -1 : closeTagIndex + globalIndexPosition + subtractedChunkBytes,
@@ -250,11 +250,11 @@ export class ParserV2 {
      * @param node ResultTreeNode
      * @returns void
      */
-    private append(path: string, node: Result): void {
+    private append(path: string, node: Token): void {
         const parentLvlKey: string = path.substring(0, path.lastIndexOf("/"));
 
         //The hash map allows to avoid the traverse of the hole result tree
-        const parents: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
+        const parents: Token[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
 
         if (!parents) {
             throw new NodeParentNotFoundError(parentLvlKey);
@@ -264,7 +264,7 @@ export class ParserV2 {
         //so checking for inRange nodes will lead to false positives
         if (node.$position.close === -1) {
             for (let i: number = 0; i < parents.length; i++) {
-                const parent: Result = parents[i]!;
+                const parent: Token = parents[i]!;
 
                 if (parent.$position.close === -1) {
                    this.addLeafToPojo(parent, node);
@@ -277,7 +277,7 @@ export class ParserV2 {
         }
 
         for (let i: number = 0; i < parents.length; i++) {
-            const parent: Result = parents[i]!;
+            const parent: Token = parents[i]!;
 
             if (parent.$position.close === -1) {
                 this.addLeafToPojo(parent, node);
@@ -300,12 +300,12 @@ export class ParserV2 {
      * @returns void
      */
     private closeOpenNode(path: string, closeIndexPosition: number): void {
-        const nodes: Result[] = this.RESULT_TREE_HASH_MAP.get(path)!;
+        const nodes: Token[] = this.RESULT_TREE_HASH_MAP.get(path)!;
 
         // The first item found with closing tag -1 is the correct one since the parser is going top down and the
         // items are being inserted in the hash map in order as the parser founds them
         for (let i: number = 0; i < nodes.length; i++) {
-            const node: Result = nodes[i]!;
+            const node: Token = nodes[i]!;
 
             if (node.$position.close === -1) {
                 node.$position.close = closeIndexPosition;
@@ -321,8 +321,8 @@ export class ParserV2 {
      * @param node Result
      * @returns void
      */
-    private registerNewNode(path: string, node: Result): void {
-        const nodes: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(path);
+    private registerNewNode(path: string, node: Token): void {
+        const nodes: Token[] | undefined = this.RESULT_TREE_HASH_MAP.get(path);
 
         if (!nodes) {
             this.RESULT_TREE_HASH_MAP.set(path, [node]);
@@ -339,7 +339,7 @@ export class ParserV2 {
      * @param open Position of the XML openTag relative to the whole XML response
      * @param close Position of the XML closeTag relative to the whole XML response
      * @param value Value of the tag in case is a data node
-     * @returns Result
+     * @returns Token
      */
     private createResultNode(
         tagName: string,
@@ -347,7 +347,7 @@ export class ParserV2 {
         close: number,
         value: string | number | null = null,
         attribute: string | null = null,
-    ): Result {
+    ): Token {
         return {
             $name: tagName,
             $value: value,
@@ -377,7 +377,7 @@ export class ParserV2 {
      * @param node Result the current node
      * @returns void
      */
-    private addLeafToPojo(parent: Result, node: Result): void {
+    private addLeafToPojo(parent: Token, node: Token): void {
         if (Object.hasOwn(parent, node.$name)) {
             if (Array.isArray(parent[node.$name])) {
                 parent[node.$name].push(node);

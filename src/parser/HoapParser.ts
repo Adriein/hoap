@@ -16,13 +16,14 @@ import {
 } from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
-import {RawBinaryXmlTagPair, Result} from "@shared/Types";
+import {ParserTask, RawBinaryXmlTagPair, Token} from "@shared/Types";
 import {isInRange} from "@parser/Shared/Utils";
 import {NodeParentNotFoundError} from "@parser/Shared/Error/NodeParentNotFoundError";
+import {Tokenizer} from "@parser/Tokenizer";
 
 export class HoapParser {
     private readonly WATCHED_XML_TAG_TREE: XmlTreeNode;
-    private readonly RESULT_TREE_HASH_MAP: Map<string, Result[]> = new Map<string, Result[]>();
+    private readonly RESULT_TREE_HASH_MAP: Map<string, Token[]> = new Map<string, Token[]>();
 
     public constructor(private config: ParserConfig) {
         if (!config.configFile) {
@@ -32,10 +33,10 @@ export class HoapParser {
         this.WATCHED_XML_TAG_TREE = InstructionTreeBuilder.fromHoapConfigJson(config.configFile);
     }
 
-    public parse(stream: Readable): Promise<Result> {
-        return new Promise((resolve: (json: Result) => void, reject: (error: Error) => void): void => {
+    public parse(stream: Readable): Promise<Token> {
+        return new Promise((resolve: (json: Token) => void, reject: (error: Error) => void): void => {
             const debugData: string[] = [];
-            const result: Result = {
+            const result: Token = {
                 $name: "root",
                 $value: null,
                 $attribute: null,
@@ -68,11 +69,11 @@ export class HoapParser {
                     const openTagBitmask: number = open.readInt32LE();
                     const closingTagBitmask: number = close.readInt32LE();
 
-                    const tasks: Buffer<ArrayBuffer>[] = [{type: 'OPEN', tag: open}, close];
+                    const tasks: ParserTask[] = [{type: 'OPEN', tag: open}, {type: 'CLOSE', tag: close}];
 
                     // The parser try to find all occurrences of the current tag
                     while(tasks.length > 0) {
-                        const currentTag: Buffer<ArrayBuffer> | undefined = tasks.shift();
+                        const currentTag: Buffer<ArrayBuffer> | undefined = tasks.shift()?.tag;
                         stdReadPointer = 0;
 
                         if (!currentTag) {
@@ -96,7 +97,7 @@ export class HoapParser {
 
                             const char: number = combinedChunk[stdReadPointer + open.byteLength]!;
 
-                            if (this.isFalsePositive(char)) {
+                            if (Tokenizer.isFalsePositive(char)) {
                                 stdReadPointer = stdReadPointer + open.byteLength;
 
                                 tasks.unshift(currentTag);
@@ -104,7 +105,7 @@ export class HoapParser {
                                 continue;
                             }
 
-                            const result: Result = this.createResultNode(
+                            const result: Token = Tokenizer.token(
                                 original,
                                 stdReadPointer + globalStdPointer,
                                 -1,
@@ -149,11 +150,11 @@ export class HoapParser {
      * @param node ResultTreeNode
      * @returns void
      */
-    private append(path: string, node: Result): void {
+    private append(path: string, node: Token): void {
         const parentLvlKey: string = path.substring(0, path.lastIndexOf("/"));
 
         //The hash map allows to avoid the traverse of the hole result tree
-        const parents: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
+        const parents: Token[] | undefined = this.RESULT_TREE_HASH_MAP.get(parentLvlKey !== ""? parentLvlKey : "root");
 
         if (!parents) {
             throw new NodeParentNotFoundError(parentLvlKey);
@@ -163,7 +164,7 @@ export class HoapParser {
         //so checking for inRange nodes will lead to false positives
         if (node.$position.close === -1) {
             for (let i: number = 0; i < parents.length; i++) {
-                const parent: Result = parents[i]!;
+                const parent: Token = parents[i]!;
 
                 if (parent.$position.close === -1) {
                     this.addLeafToPojo(parent, node);
@@ -176,7 +177,7 @@ export class HoapParser {
         }
 
         for (let i: number = 0; i < parents.length; i++) {
-            const parent: Result = parents[i]!;
+            const parent: Token = parents[i]!;
 
             if (parent.$position.close === -1) {
                 this.addLeafToPojo(parent, node);
@@ -199,12 +200,12 @@ export class HoapParser {
      * @returns void
      */
     private closeOpenNode(path: string, closeIndexPosition: number): void {
-        const nodes: Result[] = this.RESULT_TREE_HASH_MAP.get(path)!;
+        const nodes: Token[] = this.RESULT_TREE_HASH_MAP.get(path)!;
 
         // The first item found with closing tag -1 is the correct one since the parser is going top down and the
         // items are being inserted in the hash map in order as the parser founds them
         for (let i: number = 0; i < nodes.length; i++) {
-            const node: Result = nodes[i]!;
+            const node: Token = nodes[i]!;
 
             if (node.$position.close === -1) {
                 node.$position.close = closeIndexPosition;
@@ -220,8 +221,8 @@ export class HoapParser {
      * @param node Result
      * @returns void
      */
-    private registerNewNode(path: string, node: Result): void {
-        const nodes: Result[] | undefined = this.RESULT_TREE_HASH_MAP.get(path);
+    private registerNewNode(path: string, node: Token): void {
+        const nodes: Token[] | undefined = this.RESULT_TREE_HASH_MAP.get(path);
 
         if (!nodes) {
             this.RESULT_TREE_HASH_MAP.set(path, [node]);
@@ -233,36 +234,12 @@ export class HoapParser {
     }
 
     /**
-     * Create a new result node
-     * @param tagName Original XML tag name string without closing or opening symbols
-     * @param open Position of the XML openTag relative to the whole XML response
-     * @param close Position of the XML closeTag relative to the whole XML response
-     * @param value Value of the tag in case is a data node
-     * @param attribute
-     * @returns Result
-     */
-    private createResultNode(
-        tagName: string,
-        open: number,
-        close: number,
-        value: string | number | null = null,
-        attribute: string | null = null,
-    ): Result {
-        return {
-            $name: tagName,
-            $value: value,
-            $attribute: attribute,
-            $position: {open, close},
-        };
-    }
-
-    /**
      * Add a new prop to a plain javascript object respecting array or obj
      * @param parent Result the parent node
      * @param node Result the current node
      * @returns void
      */
-    private addLeafToPojo(parent: Result, node: Result): void {
+    private addLeafToPojo(parent: Token, node: Token): void {
         if (Object.hasOwn(parent, node.$name)) {
             if (Array.isArray(parent[node.$name])) {
                 parent[node.$name].push(node);
@@ -311,9 +288,5 @@ export class HoapParser {
         }
 
         return Buffer.from(attributeBytes);
-    }
-
-    private isFalsePositive(char: number): boolean {
-        return (char !== XML.GT_TAG[0]) && (char !== XML.BLANK_SPACE[0]);
     }
 }

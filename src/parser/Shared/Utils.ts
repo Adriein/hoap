@@ -3,10 +3,10 @@
  * MIT Licensed
  */
 
-import {InRangeFn, Result} from "@shared/Types";
+import {InRangeFn, Token} from "@shared/Types";
 
 export const isInRange: InRangeFn = (
-    node: Result,
+    node: Token,
     openTagIndex: number,
     closeTagIndex: number
 ): boolean => {
