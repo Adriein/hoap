@@ -2,6 +2,10 @@
   "version": "v1",
   "nodes": [
     {
+      "name":  "replyStatus",
+      "type": "xml-node"
+    },
+    {
       "name": "recommendation",
       "type": "xml-node",
       "children": [

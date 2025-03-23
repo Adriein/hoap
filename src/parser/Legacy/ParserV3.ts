@@ -49,7 +49,6 @@ export class HoapParser {
 
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
             let globalStdPointer: number = 0;
-            let parserMode: string = "SEARCH_OPEN_TAG";
 
             stream.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
                 if (this.config.debugMode) {
@@ -63,61 +62,119 @@ export class HoapParser {
                 XmlTreeTraverser.dfs(this.WATCHED_XML_TAG_TREE, (node: XmlTreeNode, path: string): void => {
                     const {original, type, open, close}: RawBinaryXmlTagPair = node.data;
 
-                    let stdReadPointer: number = 0;
-
-                    const openTagBitmask: number = open.readInt32LE();
-                    const closingTagBitmask: number = close.readInt32LE();
-
-                    const tasks: Buffer<ArrayBuffer>[] = [{type: 'OPEN', tag: open}, close];
+                    let chunkOpenPointer: number = 0;
+                    let chunkClosePointer: number = 0;
 
                     // The parser try to find all occurrences of the current tag
-                    while(tasks.length > 0) {
-                        const currentTag: Buffer<ArrayBuffer> | undefined = tasks.shift();
-                        stdReadPointer = 0;
+                    while(true) {
+                        const openTagIndex: number = combinedChunk.indexOf(open, chunkOpenPointer);
+                        const closeTagIndex: number = combinedChunk.indexOf(close, chunkClosePointer);
 
-                        if (!currentTag) {
-                            break;
-                        }
+                        // Open and close tag found in the observable chunk
+                        if (openTagIndex !== -1 && closeTagIndex !== -1) {
+                            const char: number = combinedChunk[openTagIndex + open.byteLength]!;
 
-                        const tagBitmask: number = currentTag.readInt32LE();
-
-                        while(stdReadPointer < chunk.byteLength) {
-                            if (stdReadPointer + 32 > chunk.byteLength) {
-                                break;
-                            }
-
-                            const stream32BitLeChunk: number = combinedChunk.readInt32LE(stdReadPointer);
-
-                            if (stream32BitLeChunk ^ tagBitmask) {
-                                stdReadPointer += 1;
+                            if(this.isFalsePositive(char)) {
+                                chunkOpenPointer = openTagIndex + open.byteLength;
 
                                 continue;
                             }
 
-                            const char: number = combinedChunk[stdReadPointer + open.byteLength]!;
+                            // The closing tag index is greater than opening tag
+                            // meaning that is a closing tag from another chunk
+                            if(closeTagIndex < openTagIndex) {
+                                this.closeOpenNode(path, closeTagIndex + globalStdPointer);
 
-                            if (this.isFalsePositive(char)) {
-                                stdReadPointer = stdReadPointer + open.byteLength;
-
-                                tasks.unshift(currentTag);
+                                chunkClosePointer = closeTagIndex + close.byteLength;
 
                                 continue;
                             }
+
+                            if(type !== XML_NODE_TYPE) {
+                                const rawBinaryValue: Buffer<ArrayBuffer> = combinedChunk.subarray(
+                                    openTagIndex + open.byteLength + 1,
+                                    closeTagIndex
+                                );
+
+                                const result: Result = this.createResultNode(
+                                    original,
+                                    openTagIndex + globalStdPointer,
+                                    closeTagIndex + globalStdPointer,
+                                    rawBinaryValue.toString(UTF_8_ENCODING)
+                                )
+
+                                this.registerNewNode(path, result);
+
+                                this.append(path, result);
+
+                                chunkOpenPointer = closeTagIndex + close.byteLength;
+                                chunkClosePointer = closeTagIndex + close.byteLength;
+
+                                continue;
+                            }
+
+                            const attribute: Buffer<ArrayBuffer> = this.extractAttributes(
+                                combinedChunk,
+                                openTagIndex,
+                                open
+                            );
 
                             const result: Result = this.createResultNode(
                                 original,
-                                stdReadPointer + globalStdPointer,
+                                openTagIndex + globalStdPointer,
+                                closeTagIndex + globalStdPointer,
+                                null,
+                                attribute.length? attribute.toString(UTF_8_ENCODING) : null,
+                            )
+
+                            this.registerNewNode(path, result);
+
+                            this.append(path, result);
+
+                            chunkOpenPointer = closeTagIndex + close.byteLength;
+                            chunkClosePointer = closeTagIndex + close.byteLength;
+
+                            continue;
+                        }
+
+                        // Only open tag found in the observed chunk
+                        if (openTagIndex !== -1) {
+                            const char: number = combinedChunk[openTagIndex + open.byteLength]!;
+
+                            if(this.isFalsePositive(char)) {
+                                chunkOpenPointer = openTagIndex + open.byteLength;
+
+                                continue;
+                            }
+
+                            if(type !== XML_NODE_TYPE) {
+                                securityBytesBuffer = combinedChunk.byteLength - openTagIndex;
+
+                                break;
+                            }
+
+                            const attribute: Buffer<ArrayBuffer> = this.extractAttributes(
+                                combinedChunk,
+                                openTagIndex,
+                                open
+                            );
+
+                            const result: Result = this.createResultNode(
+                                original,
+                                openTagIndex + globalStdPointer,
                                 -1,
                                 null,
-                                null,
+                                attribute.length? attribute.toString(UTF_8_ENCODING) : null,
                             );
 
                             this.registerNewNode(path, result);
 
                             this.append(path, result);
 
-                            stdReadPointer += 1;
+                            break;
                         }
+
+                        break;
                     }
                 });
 
