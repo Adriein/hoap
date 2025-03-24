@@ -73,12 +73,15 @@ export class HoapParser {
 
                     // The parser try to find all occurrences of the current tag
                     while(tasks.length > 0) {
-                        const currentTag: Buffer<ArrayBuffer> | undefined = tasks.shift()?.tag;
-                        stdReadPointer = 0;
+                        const task: ParserTask | undefined = tasks.shift();
 
-                        if (!currentTag) {
+                        if (!task) {
                             break;
                         }
+
+                        const currentTag: Buffer<ArrayBuffer> = task.tag;
+
+                        stdReadPointer = 0;
 
                         const tagBitmask: number = currentTag.readInt32LE();
 
@@ -97,25 +100,40 @@ export class HoapParser {
 
                             const char: number = combinedChunk[stdReadPointer + open.byteLength]!;
 
+                            //TODO: check if this is still working because it seems that i'm not capturing the correct char for the closing tag
+                            console.log(char.toString());
+
                             if (Tokenizer.isFalsePositive(char)) {
                                 stdReadPointer = stdReadPointer + open.byteLength;
 
-                                tasks.unshift(currentTag);
+                                tasks.unshift(task);
 
                                 continue;
                             }
 
-                            const result: Token = Tokenizer.token(
-                                original,
-                                stdReadPointer + globalStdPointer,
-                                -1,
-                                null,
-                                null,
-                            );
+                            if (task.type === 'OPEN') {
+                                const result: Token = Tokenizer.token(
+                                    original,
+                                    stdReadPointer + globalStdPointer,
+                                    -1,
+                                    null,
+                                    null,
+                                );
 
-                            this.registerNewNode(path, result);
+                                console.log(combinedChunk.subarray(0, stdReadPointer + task.tag.byteLength).toString())
 
-                            this.append(path, result);
+                                this.registerNewNode(path, result);
+
+                                this.append(path, result);
+
+                                stdReadPointer += 1;
+
+                                continue;
+                            }
+
+                            console.log(combinedChunk.subarray(0, stdReadPointer + task.tag.byteLength).toString())
+
+                            this.closeOpenNode(path, stdReadPointer + globalStdPointer);
 
                             stdReadPointer += 1;
                         }
