@@ -86,6 +86,8 @@ export class HoapParser {
 
                         while(stdReadPointer <= chunk.byteLength) {
                             if (stdReadPointer + 32 > chunk.byteLength) {
+                                tasks.splice(0, tasks.length);
+
                                 break;
                             }
 
@@ -122,8 +124,6 @@ export class HoapParser {
 
                                 continue;
                             }
-
-                            console.log(combinedChunk.subarray(0, stdReadPointer + task.tag.byteLength).toString())
 
                             this.closeOpenNode(path, stdReadPointer + globalStdPointer);
 
