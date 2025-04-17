@@ -32,6 +32,26 @@ export class Tokenizer {
     }
 
     /**
+     * Create a new open result node
+     * @param tagName Original XML tag name string without closing or opening symbols
+     * @param open Position of the XML openTag relative to the whole XML response
+     * @param attribute
+     * @returns Token
+     */
+    public static openToken(
+        tagName: string,
+        open: number,
+        attribute: string | null = null,
+    ): Token {
+        return {
+            $name: tagName,
+            $value: null,
+            $attribute: attribute,
+            $position: {open, close: -1},
+        };
+    }
+
+    /**
      * Check if the next char is not a > or a blank space, meaning that we found a similar tag but not the
      * one we are looking for
      * E.g:

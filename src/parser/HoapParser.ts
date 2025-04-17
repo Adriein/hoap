@@ -16,7 +16,7 @@ import {
 } from "@shared/Constants";
 import {ParserConfigError} from "@parser/Shared/Error";
 import {XmlTreeNode, XmlTreeTraverser} from "@parser/Shared/Tree";
-import {ParserTask, RawBinaryXmlTagPair, Token} from "@shared/Types";
+import {ParserTask, ParserTaskType, RawBinaryXmlTagPair, Token} from "@shared/Types";
 import {isInRange} from "@parser/Shared/Utils";
 import {NodeParentNotFoundError} from "@parser/Shared/Error/NodeParentNotFoundError";
 import {Tokenizer} from "@parser/Tokenizer";
@@ -50,7 +50,6 @@ export class HoapParser {
 
             let bufferLeftover: Buffer<ArrayBuffer> = Buffer.alloc(0);
             let globalStdPointer: number = 0;
-            let parserMode: string = "SEARCH_OPEN_TAG";
 
             stream.on(NODE_STREAM_DATA_EVENT, (chunk: Buffer<ArrayBuffer>): void => {
                 if (this.config.debugMode) {
@@ -66,10 +65,10 @@ export class HoapParser {
 
                     let stdReadPointer: number = 0;
 
-                    const openTagBitmask: number = open.readInt32LE();
-                    const closingTagBitmask: number = close.readInt32LE();
-
-                    const tasks: ParserTask[] = [{type: 'OPEN', tag: open}, {type: 'CLOSE', tag: close}];
+                    const tasks: ParserTask[] = [
+                        {type: ParserTaskType.OPEN, tag: open},
+                        {type: ParserTaskType.CLOSE, tag: close}
+                    ];
 
                     // The parser try to find all occurrences of the current tag
                     while(tasks.length > 0) {
@@ -85,7 +84,7 @@ export class HoapParser {
 
                         const tagBitmask: number = currentTag.readInt32LE();
 
-                        while(stdReadPointer < chunk.byteLength) {
+                        while(stdReadPointer <= chunk.byteLength) {
                             if (stdReadPointer + 32 > chunk.byteLength) {
                                 break;
                             }
@@ -93,15 +92,16 @@ export class HoapParser {
                             const stream32BitLeChunk: number = combinedChunk.readInt32LE(stdReadPointer);
 
                             if (stream32BitLeChunk ^ tagBitmask) {
-                                stdReadPointer += 1;
+                                stdReadPointer++;
 
                                 continue;
                             }
 
-                            const char: number = combinedChunk[stdReadPointer + open.byteLength]!;
+                            const byteLength: number = task.type === ParserTaskType.OPEN?
+                                task.tag.byteLength :
+                                task.tag.byteLength - 1;
 
-                            //TODO: check if this is still working because it seems that i'm not capturing the correct char for the closing tag
-                            console.log(char.toString());
+                            const char: number = combinedChunk[stdReadPointer + byteLength]!;
 
                             if (Tokenizer.isFalsePositive(char)) {
                                 stdReadPointer = stdReadPointer + open.byteLength;
@@ -111,16 +111,8 @@ export class HoapParser {
                                 continue;
                             }
 
-                            if (task.type === 'OPEN') {
-                                const result: Token = Tokenizer.token(
-                                    original,
-                                    stdReadPointer + globalStdPointer,
-                                    -1,
-                                    null,
-                                    null,
-                                );
-
-                                console.log(combinedChunk.subarray(0, stdReadPointer + task.tag.byteLength).toString())
+                            if (task.type === ParserTaskType.OPEN) {
+                                const result: Token = Tokenizer.openToken(original, stdReadPointer + globalStdPointer);
 
                                 this.registerNewNode(path, result);
 

@@ -25,6 +25,11 @@ export type WatchedXmlTagsJson = { version: string, nodes: WatchedXmlTagNode[] }
 
 export type ParserTask = {type: string, tag: Buffer<ArrayBuffer>};
 
+export enum ParserTaskType {
+    OPEN = "OPEN",
+    CLOSE = "CLOSE",
+}
+
 export type Token = {
     [prop: string]: any,
     $name: string;
